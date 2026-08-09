@@ -77,6 +77,10 @@ export function RequestsPage() {
     () => new Map((materiais ?? []).map((m) => [m.id, m])),
     [materiais],
   )
+  const motoristaNameById = React.useMemo(
+    () => new Map((motoristas ?? []).map((m) => [m.id, m.name])),
+    [motoristas],
+  )
 
   const filtered = React.useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -96,6 +100,17 @@ export function RequestsPage() {
   function openDetails(id: string) {
     setDetailsId(id)
     setDetailsOpen(true)
+  }
+
+  function handleExportPdf() {
+    exportSolicitacoesPdf({
+      requests: filtered,
+      subtitle: statusFilter !== "todos" ? `Filtro de status: ${STATUS_LABELS[statusFilter]}` : undefined,
+      clienteById: new Map([...clienteById.entries()].map(([id, c]) => [id, c.name])),
+      materialById: new Map([...materialById.entries()].map(([id, m]) => [id, m.name])),
+      motoristaById: motoristaNameById,
+      precos: precos ?? [],
+    })
   }
 
   return (
@@ -125,6 +140,12 @@ export function RequestsPage() {
             ))}
           </SelectContent>
         </Select>
+        {isStaffActor && (
+          <Button variant="outline" onClick={handleExportPdf} disabled={filtered.length === 0}>
+            <FileDown />
+            Exportar PDF
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
