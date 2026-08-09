@@ -1,0 +1,175 @@
+import type { Veiculo } from "@/types/entities"
+import { isoAtOffset } from "./dateHelpers"
+
+export const SEED_VEHICLE_IDS = {
+  moto1: "veiculo-moto-1",
+  moto2: "veiculo-moto-2",
+  utilitario1: "veiculo-utilitario-1",
+  utilitario2: "veiculo-utilitario-2",
+  caminhaoMedio1: "veiculo-caminhaomedio-1",
+  caminhaoMedio2: "veiculo-caminhaomedio-2",
+  caminhaoGrande1: "veiculo-caminhaogrande-1",
+  caminhaoGrande2: "veiculo-caminhaogrande-2",
+} as const
+
+export function seedVeiculos(): Veiculo[] {
+  const createdAt = isoAtOffset(-170)
+
+  const base: Omit<Veiculo, "id" | "plate" | "type" | "brand" | "model" | "year" | "status"> = {
+    document_number: "",
+    capacity: 0,
+    length: 0,
+    width: 0,
+    height: 0,
+    created_at: createdAt,
+    updated_at: createdAt,
+  }
+
+  const veiculos: Veiculo[] = [
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.moto1,
+      plate: "RIO1A23",
+      type: "moto",
+      brand: "Honda",
+      model: "CG 160",
+      year: 2022,
+      capacity: 50,
+      length: 0.6,
+      width: 0.4,
+      height: 0.4,
+      document_number: "CRLV-88213041",
+      status: "active",
+    },
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.moto2,
+      plate: "RIO2B34",
+      type: "moto",
+      brand: "Yamaha",
+      model: "Factor 125",
+      year: 2021,
+      capacity: 40,
+      length: 0.55,
+      width: 0.4,
+      height: 0.4,
+      document_number: "CRLV-88213042",
+      status: "maintenance",
+    },
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.utilitario1,
+      plate: "SPA3C45",
+      type: "utilitario",
+      brand: "Fiat",
+      model: "Fiorino",
+      year: 2023,
+      capacity: 800,
+      length: 2.5,
+      width: 1.6,
+      height: 1.7,
+      document_number: "CRLV-88213043",
+      status: "active",
+    },
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.utilitario2,
+      plate: "SPB4D56",
+      type: "utilitario",
+      brand: "Renault",
+      model: "Kangoo",
+      year: 2022,
+      capacity: 750,
+      length: 2.4,
+      width: 1.6,
+      height: 1.6,
+      document_number: "CRLV-88213044",
+      status: "active",
+    },
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.caminhaoMedio1,
+      plate: "SPC5E67",
+      type: "caminhao_medio",
+      brand: "Volkswagen",
+      model: "Delivery Express",
+      year: 2021,
+      capacity: 4000,
+      length: 6,
+      width: 2.2,
+      height: 2.4,
+      document_number: "CRLV-88213045",
+      status: "active",
+    },
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.caminhaoMedio2,
+      plate: "SPD6F78",
+      type: "caminhao_medio",
+      brand: "Ford",
+      model: "Cargo 816",
+      year: 2020,
+      capacity: 4200,
+      length: 6.2,
+      width: 2.2,
+      height: 2.4,
+      document_number: "CRLV-88213046",
+      status: "inactive",
+    },
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.caminhaoGrande1,
+      plate: "SPE7G89",
+      type: "caminhao_grande",
+      brand: "Mercedes-Benz",
+      model: "Atego 2426",
+      year: 2019,
+      capacity: 12000,
+      length: 9,
+      width: 2.5,
+      height: 2.8,
+      document_number: "CRLV-88213047",
+      status: "active",
+    },
+    {
+      ...base,
+      id: SEED_VEHICLE_IDS.caminhaoGrande2,
+      plate: "SPF8H90",
+      type: "caminhao_grande",
+      brand: "Volvo",
+      model: "VM 270",
+      year: 2022,
+      capacity: 13000,
+      length: 9.2,
+      width: 2.5,
+      height: 2.9,
+      document_number: "CRLV-88213048",
+      status: "active",
+    },
+  ]
+
+  return veiculos
+}
+
+/** Specs de referência por tipo, usadas no popover de ajuda ao cliente/staff (doc/04, doc/08). */
+export const VEHICLE_TYPE_SPECS: Record<
+  Veiculo["type"],
+  { label: string; capacity: string; dimensions: string }
+> = {
+  moto: { label: "Moto", capacity: "até 50 kg", dimensions: "0,6 × 0,4 × 0,4 m" },
+  utilitario: {
+    label: "Utilitário",
+    capacity: "até 800 kg",
+    dimensions: "2,5 × 1,6 × 1,7 m",
+  },
+  caminhao_medio: {
+    label: "Caminhão médio",
+    capacity: "até 4.200 kg",
+    dimensions: "6,2 × 2,2 × 2,4 m",
+  },
+  caminhao_grande: {
+    label: "Caminhão grande",
+    capacity: "até 13.000 kg",
+    dimensions: "9,2 × 2,5 × 2,9 m",
+  },
+}
