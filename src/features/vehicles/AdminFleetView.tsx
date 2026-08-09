@@ -237,7 +237,7 @@ export function AdminFleetView() {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
               <XAxis dataKey="plate" tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} axisLine={{ stroke: "var(--color-border)" }} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} axisLine={false} tickLine={false} width={40} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value) => formatCurrency(Number(value))} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="combustivel" name="Combustível" stackId="cost" fill={CHART_COLORS.combustivel} radius={[0, 0, 0, 0]} maxBarSize={36} />
               <Bar dataKey="oleo" name="Óleo" stackId="cost" fill={CHART_COLORS.oleo} maxBarSize={36} />
@@ -253,7 +253,7 @@ export function AdminFleetView() {
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" />
               <XAxis dataKey="plate" tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} axisLine={{ stroke: "var(--color-border)" }} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }} axisLine={false} tickLine={false} width={50} />
-              <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => formatCurrency(value)} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(value) => formatCurrency(Number(value))} />
               <Bar dataKey="frete" name="Frete" fill={CHART_COLORS.frete} radius={[4, 4, 0, 0]} maxBarSize={36} />
             </BarChart>
           </ResponsiveContainer>
