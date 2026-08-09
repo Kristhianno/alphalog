@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -48,9 +49,28 @@ export function LunchBreakHistoryTable({ records, driverNameById, canEdit = fals
 
   const sorted = [...records].sort((a, b) => b.break_date.localeCompare(a.break_date))
 
+  function ActionsMenu({ record }: { record: PausaAlmoco }) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Ações">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => setViewTarget(record)}>Ver detalhes</DropdownMenuItem>
+          {canEdit && <DropdownMenuItem onSelect={() => setEditTarget(record)}>Editar</DropdownMenuItem>}
+          <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(record)}>
+            Excluir
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+
   return (
     <>
-      <div className="overflow-x-auto rounded-md border border-border">
+      <div className="hidden overflow-x-auto rounded-md border border-border md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -79,28 +99,41 @@ export function LunchBreakHistoryTable({ records, driverNameById, canEdit = fals
                   </TableCell>
                   <TableCell className="text-muted-foreground">{formatCurrency(record.valor)}</TableCell>
                   <TableCell onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" aria-label="Ações">
-                          <MoreHorizontal className="size-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => setViewTarget(record)}>Ver detalhes</DropdownMenuItem>
-                        {canEdit && (
-                          <DropdownMenuItem onSelect={() => setEditTarget(record)}>Editar</DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(record)}>
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <ActionsMenu record={record} />
                   </TableCell>
                 </TableRow>
               )
             })}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="space-y-2.5 md:hidden">
+        {sorted.map((record) => {
+          const duration = computeLunchDurationMinutes(record.exit_time, record.return_time)
+          return (
+            <Card key={record.id} className="p-3" onClick={() => setViewTarget(record)}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  {driverNameById && (
+                    <p className="truncate text-sm font-medium">{driverNameById.get(record.driver_id) ?? "—"}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">{formatDate(record.break_date)}</p>
+                </div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <ActionsMenu record={record} />
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                <span>
+                  Saída {record.exit_time} · Retorno {record.return_time ?? "em andamento"}
+                </span>
+                <span>{duration != null ? formatDurationMinutes(duration) : "—"}</span>
+                <span>{formatCurrency(record.valor)}</span>
+              </div>
+            </Card>
+          )
+        })}
       </div>
 
       {canEdit && (

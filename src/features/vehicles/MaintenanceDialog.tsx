@@ -144,7 +144,7 @@ export function MaintenanceDialog({ open, onOpenChange, veiculos, defaultVehicle
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="maintenanceType"
@@ -183,7 +183,7 @@ export function MaintenanceDialog({ open, onOpenChange, veiculos, defaultVehicle
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="currentKm"

@@ -44,10 +44,29 @@ import { deriveCurrentKm, isOilChangeOverdue } from "@/domain/vehicleKm"
 import { FUEL_TYPE_LABELS, VEHICLE_TYPE_LABELS } from "@/lib/constants"
 import { formatCurrency, formatKm } from "@/lib/format"
 import { FUEL_TYPES, VEHICLE_TYPES, type FuelType, type VehicleType } from "@/types/enums"
-import type { Veiculo } from "@/types/entities"
+import type { LogCombustivel, RegistroManutencao, TrocaDeOleo, Veiculo } from "@/types/entities"
 
 type TypeFilter = VehicleType | "todos"
 type FuelFilter = FuelType | "todos"
+
+function vehicleIndicators(
+  vehicle: Veiculo,
+  combustivel: LogCombustivel[],
+  oleo: TrocaDeOleo[],
+  manutencao: RegistroManutencao[],
+) {
+  const currentKm = deriveCurrentKm({
+    vehicleId: vehicle.id,
+    fuelLogs: combustivel,
+    oilChanges: oleo,
+    maintenanceLogs: manutencao,
+  })
+  const overdue = isOilChangeOverdue({ currentKm, vehicleId: vehicle.id, oilChanges: oleo })
+  const latestOil = oleo
+    .filter((o) => o.vehicle_id === vehicle.id)
+    .sort((a, b) => b.km_at_change - a.km_at_change)[0]
+  return { currentKm, overdue, latestOil }
+}
 
 const CHART_COLORS = {
   combustivel: "var(--color-chart-1)",
@@ -313,56 +332,80 @@ export function AdminFleetView() {
           <p className="text-sm text-muted-foreground">Nenhum veículo encontrado.</p>
         </div>
       ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Placa</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>KM atual</TableHead>
-                <TableHead>Próxima troca</TableHead>
-                <TableHead>Situação</TableHead>
-                <TableHead className="w-10" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredVeiculos.map((v) => {
-                const currentKm = deriveCurrentKm({
-                  vehicleId: v.id,
-                  fuelLogs: combustivel ?? [],
-                  oilChanges: oleo ?? [],
-                  maintenanceLogs: manutencao ?? [],
-                })
-                const overdue = isOilChangeOverdue({ currentKm, vehicleId: v.id, oilChanges: oleo ?? [] })
-                const latestOil = (oleo ?? [])
-                  .filter((o) => o.vehicle_id === v.id)
-                  .sort((a, b) => b.km_at_change - a.km_at_change)[0]
-                return (
-                  <TableRow key={v.id} className="cursor-pointer" onClick={() => setDetailVehicle(v)}>
-                    <TableCell className="font-medium">{v.plate}</TableCell>
-                    <TableCell className="text-muted-foreground">{VEHICLE_TYPE_LABELS[v.type]}</TableCell>
-                    <TableCell>{formatKm(currentKm)}</TableCell>
-                    <TableCell>{latestOil ? formatKm(latestOil.next_change_km) : "—"}</TableCell>
-                    <TableCell>
-                      {overdue ? (
-                        <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
-                          <AlertTriangle className="size-3.5" /> Óleo vencido
-                        </span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Em dia</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailVehicle(v) }}>
-                        Ver histórico
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+        <>
+          <Card className="hidden overflow-hidden md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Placa</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>KM atual</TableHead>
+                  <TableHead>Próxima troca</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead className="w-10" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredVeiculos.map((v) => {
+                  const { currentKm, overdue, latestOil } = vehicleIndicators(v, combustivel ?? [], oleo ?? [], manutencao ?? [])
+                  return (
+                    <TableRow key={v.id} className="cursor-pointer" onClick={() => setDetailVehicle(v)}>
+                      <TableCell className="font-medium">{v.plate}</TableCell>
+                      <TableCell className="text-muted-foreground">{VEHICLE_TYPE_LABELS[v.type]}</TableCell>
+                      <TableCell>{formatKm(currentKm)}</TableCell>
+                      <TableCell>{latestOil ? formatKm(latestOil.next_change_km) : "—"}</TableCell>
+                      <TableCell>
+                        {overdue ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+                            <AlertTriangle className="size-3.5" /> Óleo vencido
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Em dia</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDetailVehicle(v) }}>
+                          Ver histórico
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+
+          <div className="space-y-2.5 md:hidden">
+            {filteredVeiculos.map((v) => {
+              const { currentKm, overdue, latestOil } = vehicleIndicators(v, combustivel ?? [], oleo ?? [], manutencao ?? [])
+              return (
+                <Card
+                  key={v.id}
+                  className={overdue ? "border-destructive p-4" : "p-4"}
+                  onClick={() => setDetailVehicle(v)}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-medium">{v.plate}</p>
+                      <p className="text-xs text-muted-foreground">{VEHICLE_TYPE_LABELS[v.type]}</p>
+                    </div>
+                    {overdue ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-destructive">
+                        <AlertTriangle className="size-3.5" /> Óleo vencido
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Em dia</span>
+                    )}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <span>KM atual: {formatKm(currentKm)}</span>
+                    <span>Próxima troca: {latestOil ? formatKm(latestOil.next_change_km) : "—"}</span>
+                  </div>
+                </Card>
+              )
+            })}
+          </div>
+        </>
       )}
 
       <VehicleDetailDialog veiculo={detailVehicle} open={!!detailVehicle} onOpenChange={(open) => !open && setDetailVehicle(undefined)} />

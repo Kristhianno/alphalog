@@ -153,7 +153,7 @@ export function UserFormDialog({ open, onOpenChange, usuario, motorista }: UserF
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="username"
@@ -223,7 +223,7 @@ export function UserFormDialog({ open, onOpenChange, usuario, motorista }: UserF
             {role === "motorista" && (
               <div className="space-y-2">
                 <Label>Tipos de veículo habilitados</Label>
-                <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3">
+                <div className="grid grid-cols-1 gap-2 rounded-md border border-border p-3 sm:grid-cols-2">
                   {VEHICLE_TYPES.map((type) => {
                     const checked = form.watch("enabledVehicleTypes").includes(type)
                     const spec = VEHICLE_TYPE_SPECS[type]

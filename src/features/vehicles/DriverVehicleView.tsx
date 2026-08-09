@@ -224,7 +224,7 @@ export function DriverVehicleView() {
         </TabsList>
 
         <TabsContent value="combustivel">
-          <Card className="overflow-hidden">
+          <Card className="hidden overflow-hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -247,10 +247,19 @@ export function DriverVehicleView() {
               </TableBody>
             </Table>
           </Card>
+          <div className="space-y-2.5 md:hidden">
+            {filteredFuel.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nenhum registro.</p>
+            ) : (
+              filteredFuel.map((log) => (
+                <FuelCard key={log.id} log={log} onEdit={() => { setEditFuel(log); setFuelDialogOpen(true) }} />
+              ))
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="oleo">
-          <Card className="overflow-hidden">
+          <Card className="hidden overflow-hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -274,10 +283,19 @@ export function DriverVehicleView() {
               </TableBody>
             </Table>
           </Card>
+          <div className="space-y-2.5 md:hidden">
+            {filteredOil.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nenhum registro.</p>
+            ) : (
+              filteredOil.map((log) => (
+                <OilCard key={log.id} log={log} onEdit={() => { setEditOil(log); setOilDialogOpen(true) }} />
+              ))
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="manutencao">
-          <Card className="overflow-hidden">
+          <Card className="hidden overflow-hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -300,10 +318,19 @@ export function DriverVehicleView() {
               </TableBody>
             </Table>
           </Card>
+          <div className="space-y-2.5 md:hidden">
+            {filteredMaintenance.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nenhum registro.</p>
+            ) : (
+              filteredMaintenance.map((log) => (
+                <MaintenanceCard key={log.id} log={log} onEdit={() => { setEditMaintenance(log); setMaintenanceDialogOpen(true) }} />
+              ))
+            )}
+          </div>
         </TabsContent>
 
         <TabsContent value="checklist">
-          <Card className="overflow-hidden">
+          <Card className="hidden overflow-hidden md:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -325,6 +352,15 @@ export function DriverVehicleView() {
               </TableBody>
             </Table>
           </Card>
+          <div className="space-y-2.5 md:hidden">
+            {filteredChecklists.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">Nenhum registro.</p>
+            ) : (
+              filteredChecklists.map((log) => (
+                <ChecklistCard key={log.id} log={log} onEdit={() => { setEditChecklist(log); setChecklistDialogOpen(true) }} />
+              ))
+            )}
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -490,5 +526,140 @@ function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => voi
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+function RecordCard({
+  title,
+  subtitle,
+  details,
+  onEdit,
+  onDelete,
+}: {
+  title: string
+  subtitle: string
+  details: string
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  return (
+    <Card className="flex items-start justify-between gap-2 p-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">
+          {title} <span className="font-normal text-muted-foreground">— {subtitle}</span>
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{details}</p>
+      </div>
+      <RowMenu onEdit={onEdit} onDelete={onDelete} />
+    </Card>
+  )
+}
+
+function FuelCard({ log, onEdit }: { log: LogCombustivel; onEdit: () => void }) {
+  const deleteLog = useDeleteLogCombustivel(log.vehicle_id)
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  return (
+    <>
+      <RecordCard
+        title={formatDate(log.log_date)}
+        subtitle={log.vehicle_plate}
+        details={`${FUEL_TYPE_LABELS[log.fuel_type]} · ${log.liters.toFixed(1)} L · ${formatCurrency(log.liters * log.fuel_price)}`}
+        onEdit={onEdit}
+        onDelete={() => setConfirmOpen(true)}
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Excluir abastecimento"
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={async () => {
+          await deleteLog.mutateAsync(log.id)
+          toast.success("Registro excluído.")
+        }}
+      />
+    </>
+  )
+}
+
+function OilCard({ log, onEdit }: { log: TrocaDeOleo; onEdit: () => void }) {
+  const deleteLog = useDeleteTrocaDeOleo(log.vehicle_id)
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  return (
+    <>
+      <RecordCard
+        title={formatDate(log.change_date)}
+        subtitle={log.vehicle_plate}
+        details={`${log.oil_type} · ${formatKm(log.km_at_change)} → ${formatKm(log.next_change_km)} · ${formatCurrency(log.service_cost)}`}
+        onEdit={onEdit}
+        onDelete={() => setConfirmOpen(true)}
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Excluir troca de óleo"
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={async () => {
+          await deleteLog.mutateAsync(log.id)
+          toast.success("Registro excluído.")
+        }}
+      />
+    </>
+  )
+}
+
+function MaintenanceCard({ log, onEdit }: { log: RegistroManutencao; onEdit: () => void }) {
+  const deleteLog = useDeleteRegistroManutencao(log.vehicle_id)
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  return (
+    <>
+      <RecordCard
+        title={formatDate(log.maintenance_date)}
+        subtitle={log.vehicle_plate}
+        details={`${MAINTENANCE_TYPE_LABELS[log.maintenance_type]} · ${formatKm(log.current_km)} · ${formatCurrency(log.service_cost)}`}
+        onEdit={onEdit}
+        onDelete={() => setConfirmOpen(true)}
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Excluir manutenção"
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={async () => {
+          await deleteLog.mutateAsync(log.id)
+          toast.success("Registro excluído.")
+        }}
+      />
+    </>
+  )
+}
+
+function ChecklistCard({ log, onEdit }: { log: ChecklistVeiculo; onEdit: () => void }) {
+  const deleteLog = useDeleteChecklist()
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  const negatives = totalNegativeAnswers(log)
+  return (
+    <>
+      <RecordCard
+        title={formatDate(log.checklist_date)}
+        subtitle={log.vehicle_plate}
+        details={`${formatKm(log.current_km)} · ${negatives} item(ns) "Não"`}
+        onEdit={onEdit}
+        onDelete={() => setConfirmOpen(true)}
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Excluir checklist"
+        confirmLabel="Excluir"
+        destructive
+        onConfirm={async () => {
+          await deleteLog.mutateAsync(log.id)
+          toast.success("Registro excluído.")
+        }}
+      />
+    </>
   )
 }

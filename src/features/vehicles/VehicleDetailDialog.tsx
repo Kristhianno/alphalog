@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table,
@@ -25,7 +26,13 @@ import { totalNegativeAnswers } from "@/domain/checklist"
 import { exportVehiclePdf } from "./exportVehiclePdf"
 import { FUEL_TYPE_LABELS, MAINTENANCE_TYPE_LABELS } from "@/lib/constants"
 import { formatCurrency, formatDate, formatKm } from "@/lib/format"
-import type { Veiculo } from "@/types/entities"
+import type {
+  ChecklistVeiculo,
+  LogCombustivel,
+  RegistroManutencao,
+  TrocaDeOleo,
+  Veiculo,
+} from "@/types/entities"
 
 interface VehicleDetailDialogProps {
   veiculo: Veiculo | undefined
@@ -61,7 +68,7 @@ export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDial
           </TabsList>
 
           <TabsContent value="combustivel" className="max-h-96 overflow-y-auto">
-            <Table>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
@@ -85,10 +92,11 @@ export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDial
                 )}
               </TableBody>
             </Table>
+            <FuelCardList records={fuel} />
           </TabsContent>
 
           <TabsContent value="oleo" className="max-h-96 overflow-y-auto">
-            <Table>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
@@ -112,10 +120,11 @@ export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDial
                 )}
               </TableBody>
             </Table>
+            <OilCardList records={oilChanges} />
           </TabsContent>
 
           <TabsContent value="manutencao" className="max-h-96 overflow-y-auto">
-            <Table>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
@@ -139,10 +148,11 @@ export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDial
                 )}
               </TableBody>
             </Table>
+            <MaintenanceCardList records={maintenance} />
           </TabsContent>
 
           <TabsContent value="checklist" className="max-h-96 overflow-y-auto">
-            <Table>
+            <Table className="hidden md:table">
               <TableHeader>
                 <TableRow>
                   <TableHead>Data</TableHead>
@@ -170,6 +180,7 @@ export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDial
                 )}
               </TableBody>
             </Table>
+            <ChecklistCardList records={checklistLogs} />
           </TabsContent>
         </Tabs>
         <DialogFooter>
@@ -193,5 +204,84 @@ export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDial
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+function EmptyOrList<T>({ records, render }: { records: T[]; render: (record: T) => React.ReactNode }) {
+  if (records.length === 0) {
+    return <p className="py-6 text-center text-sm text-muted-foreground">Nenhum registro.</p>
+  }
+  return <div className="space-y-2 md:hidden">{records.map(render)}</div>
+}
+
+function FuelCardList({ records }: { records: LogCombustivel[] }) {
+  return (
+    <EmptyOrList
+      records={records}
+      render={(l) => (
+        <Card key={l.id} className="p-3 text-sm">
+          <p className="font-medium">{formatDate(l.log_date)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {FUEL_TYPE_LABELS[l.fuel_type]} · {l.liters.toFixed(1)} L · {formatCurrency(l.liters * l.fuel_price)}
+          </p>
+        </Card>
+      )}
+    />
+  )
+}
+
+function OilCardList({ records }: { records: TrocaDeOleo[] }) {
+  return (
+    <EmptyOrList
+      records={records}
+      render={(l) => (
+        <Card key={l.id} className="p-3 text-sm">
+          <p className="font-medium">{formatDate(l.change_date)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {formatKm(l.km_at_change)} → {formatKm(l.next_change_km)} · {formatCurrency(l.service_cost)}
+          </p>
+        </Card>
+      )}
+    />
+  )
+}
+
+function MaintenanceCardList({ records }: { records: RegistroManutencao[] }) {
+  return (
+    <EmptyOrList
+      records={records}
+      render={(l) => (
+        <Card key={l.id} className="p-3 text-sm">
+          <p className="font-medium">{formatDate(l.maintenance_date)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {MAINTENANCE_TYPE_LABELS[l.maintenance_type]} · {formatKm(l.current_km)} · {formatCurrency(l.service_cost)}
+          </p>
+        </Card>
+      )}
+    />
+  )
+}
+
+function ChecklistCardList({ records }: { records: ChecklistVeiculo[] }) {
+  return (
+    <EmptyOrList
+      records={records}
+      render={(l) => {
+        const negatives = totalNegativeAnswers(l)
+        return (
+          <Card key={l.id} className="flex items-center justify-between p-3 text-sm">
+            <div>
+              <p className="font-medium">{formatDate(l.checklist_date)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{formatKm(l.current_km)}</p>
+            </div>
+            {negatives > 0 ? (
+              <Badge variant="destructive">{negatives}</Badge>
+            ) : (
+              <span className="text-xs text-muted-foreground">0 "Não"</span>
+            )}
+          </Card>
+        )
+      }}
+    />
   )
 }
