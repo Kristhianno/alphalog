@@ -50,7 +50,6 @@ import type {
   LogCombustivel,
   RegistroManutencao,
   TrocaDeOleo,
-  Veiculo,
 } from "@/types/entities"
 
 type TypeFilter = VehicleType | "todos"
@@ -493,6 +492,3 @@ function RowMenu({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => voi
     </DropdownMenu>
   )
 }
-
-// Referenced for type-only import cleanliness.
-type _Unused = Veiculo
