@@ -1,10 +1,13 @@
+import { FileDown } from "lucide-react"
 import {
   Dialog,
   DialogContent,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Table,
@@ -19,6 +22,7 @@ import { useTrocasDeOleoList } from "@/hooks/useOleo"
 import { useRegistrosManutencaoList } from "@/hooks/useManutencao"
 import { useChecklistsList } from "@/hooks/useChecklists"
 import { totalNegativeAnswers } from "@/domain/checklist"
+import { exportVehiclePdf } from "./exportVehiclePdf"
 import { FUEL_TYPE_LABELS, MAINTENANCE_TYPE_LABELS } from "@/lib/constants"
 import { formatCurrency, formatDate, formatKm } from "@/lib/format"
 import type { Veiculo } from "@/types/entities"
@@ -168,6 +172,25 @@ export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDial
             </Table>
           </TabsContent>
         </Tabs>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() =>
+              veiculo &&
+              exportVehiclePdf({
+                veiculo,
+                combustivel: fuel,
+                oleo: oilChanges,
+                manutencao: maintenance,
+                checklists: checklistLogs,
+              })
+            }
+          >
+            <FileDown />
+            Exportar PDF
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
