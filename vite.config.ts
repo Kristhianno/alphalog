@@ -17,7 +17,7 @@ export default defineConfig({
         short_name: 'AlphaData',
         description: 'Gestão de solicitações, motoristas, veículos e frota da AlphaData.',
         theme_color: '#2691d7',
-        background_color: '#ffffff',
+        background_color: '#000000',
         display: 'standalone',
         start_url: '/',
         scope: '/',
