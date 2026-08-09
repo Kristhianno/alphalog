@@ -35,3 +35,4 @@ Qualquer outro nome próprio (clientes, placas, cidades específicas) usado como
 | [06-stack-tecnica-e-integracoes.md](06-stack-tecnica-e-integracoes.md) | Stack recomendada, bibliotecas de apoio, funções de backend (edge functions) e padrão de cache/tempo real no cliente. |
 | [07-mobile-app-e-notificacoes.md](07-mobile-app-e-notificacoes.md) | Arquitetura do app mobile (Capacitor), arquitetura de notificação push de referência e checklist de publicação nas lojas. |
 | [08-guia-de-customizacao.md](08-guia-de-customizacao.md) | O que trocar para adaptar este blueprint a uma nova empresa, armadilhas conhecidas a evitar e ordem sugerida de implementação. |
+| [09-deploy-cloudflare-pages.md](09-deploy-cloudflare-pages.md) | Processo real de publicação deste protótipo no Cloudflare Pages via upload direto pela CLI (Wrangler), sem depender de integração com GitHub. |
