@@ -1,5 +1,5 @@
 import * as React from "react"
-import { AlertTriangle, Warehouse } from "lucide-react"
+import { AlertTriangle, FileDown, Warehouse } from "lucide-react"
 import {
   Bar,
   BarChart,
@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/table"
 import { VehicleDetailDialog } from "./VehicleDetailDialog"
 import { buildCostByVehicle, buildFreightByVehicle, buildVolumeByTypeOverTime } from "./vehicleAnalytics"
+import { exportFleetPdf } from "./exportFleetPdf"
 import { deriveCurrentKm, isOilChangeOverdue } from "@/domain/vehicleKm"
 import { FUEL_TYPE_LABELS, VEHICLE_TYPE_LABELS } from "@/lib/constants"
 import { formatCurrency, formatKm } from "@/lib/format"
@@ -183,6 +184,22 @@ export function AdminFleetView() {
             Limpar filtros
           </Button>
         )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            exportFleetPdf({
+              veiculos: filteredVeiculos,
+              combustivel: filteredFuel,
+              oleo: filteredOil,
+              manutencao: filteredMaintenance,
+            })
+          }
+          disabled={filteredVeiculos.length === 0}
+        >
+          <FileDown />
+          Exportar PDF da frota
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">

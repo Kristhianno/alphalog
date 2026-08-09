@@ -160,6 +160,16 @@ export function DashboardPage() {
     setDetailsOpen(true)
   }
 
+  function handleExportPdf() {
+    exportSolicitacoesPdf({
+      requests: filtered,
+      clienteById: new Map([...clienteById.entries()].map(([id, c]) => [id, c.name])),
+      materialById: new Map([...materialById.entries()].map(([id, m]) => [id, m.name])),
+      motoristaById: new Map([...motoristaById.entries()].map(([id, m]) => [id, m.name])),
+      precos: precos ?? [],
+    })
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
@@ -243,6 +253,10 @@ export function DashboardPage() {
                 Limpar filtros
               </Button>
             )}
+            <Button variant="outline" size="sm" onClick={handleExportPdf} disabled={filtered.length === 0}>
+              <FileDown />
+              Exportar PDF
+            </Button>
           </div>
         )}
       </div>
