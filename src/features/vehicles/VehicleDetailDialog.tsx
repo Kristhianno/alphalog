@@ -29,7 +29,7 @@ interface VehicleDetailDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function VehicleDetailDialog({ veiculo, open, onOpenChange }: VehicleDetailDialogProps) {
+export function VehicleDetailDialog({ veiculo, onOpenChange }: VehicleDetailDialogProps) {
   const { data: combustivel } = useCombustivelList()
   const { data: oleo } = useTrocasDeOleoList()
   const { data: manutencao } = useRegistrosManutencaoList()
