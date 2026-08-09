@@ -1,5 +1,5 @@
 import * as React from "react"
-import { MoreHorizontal, PackageSearch, Search } from "lucide-react"
+import { FileDown, MoreHorizontal, PackageSearch, Search } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import {
   useSolicitacoesList,
@@ -9,6 +9,8 @@ import {
 import { useClientesList } from "@/hooks/useClientes"
 import { useTiposDeMaterialList } from "@/hooks/useMateriais"
 import { usePrecosList } from "@/hooks/usePrecos"
+import { useMotoristasList } from "@/hooks/useMotoristas"
+import { exportSolicitacoesPdf } from "./exportRequestsPdf"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -56,6 +58,7 @@ export function RequestsPage() {
   const { data: clientes } = useClientesList()
   const { data: materiais } = useTiposDeMaterialList()
   const { data: precos } = usePrecosList()
+  const { data: motoristas } = useMotoristasList()
   const cancelSolicitacao = useCancelSolicitacao()
   const deleteSolicitacao = useDeleteSolicitacao()
 
