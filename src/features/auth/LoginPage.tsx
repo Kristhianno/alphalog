@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BrandPanel } from "./BrandPanel"
 import { LoginForm } from "./LoginForm"
 import { RegisterForm } from "./RegisterForm"
+import { InstallPwaDialog } from "@/components/pwa/InstallPwaDialog"
 import logoHorizontal from "@/assets/logo-horizontal.png"
 
 export function LoginPage() {
@@ -32,6 +33,7 @@ export function LoginPage() {
           </Tabs>
         </div>
       </div>
+      <InstallPwaDialog />
     </div>
   )
 }
