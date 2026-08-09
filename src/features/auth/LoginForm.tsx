@@ -54,7 +54,7 @@ export function LoginForm() {
     }
   }
 
-  function useDemoAccount(identifier: string, password: string) {
+  function fillDemoAccount(identifier: string, password: string) {
     form.setValue("identifier", identifier)
     form.setValue("password", password)
   }
@@ -104,7 +104,7 @@ export function LoginForm() {
             <button
               key={account.identifier}
               type="button"
-              onClick={() => useDemoAccount(account.identifier, account.password)}
+              onClick={() => fillDemoAccount(account.identifier, account.password)}
               className="rounded-full border border-border bg-background px-2.5 py-1 text-xs text-foreground transition-colors hover:border-primary hover:text-primary"
             >
               {account.label}

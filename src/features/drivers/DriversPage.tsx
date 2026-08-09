@@ -1,3 +1,9 @@
+import { useAuth } from "@/context/AuthContext"
+import { DriverQueueView } from "./DriverQueueView"
+import { AdminDriversView } from "./AdminDriversView"
+
 export function DriversPage() {
-  return <div className="text-sm text-muted-foreground">Em construção.</div>
+  const { actor } = useAuth()
+  if (actor?.role === "motorista") return <DriverQueueView />
+  return <AdminDriversView />
 }
