@@ -16,7 +16,7 @@ export function LoginPage() {
     <div className="grid min-h-svh lg:grid-cols-2">
       <BrandPanel />
       <div className="flex flex-col items-center justify-center gap-8 p-6 sm:p-10">
-        <img src={logoHorizontal} alt="AlphaData" className="h-10 w-auto lg:hidden" />
+        <img src={logoHorizontal} alt="AlphaLog" className="h-10 w-auto lg:hidden" />
 
         <div className="w-full max-w-sm space-y-6">
           <Tabs defaultValue="entrar">

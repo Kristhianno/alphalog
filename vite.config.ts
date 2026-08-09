@@ -13,9 +13,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
       manifest: {
-        name: 'AlphaData — Gestão Logística',
-        short_name: 'AlphaData',
-        description: 'Gestão de solicitações, motoristas, veículos e frota da AlphaData.',
+        name: 'AlphaLog | Gestão Logística',
+        short_name: 'AlphaLog',
+        description: 'Gestão de solicitações, motoristas, veículos e frota da AlphaLog.',
         theme_color: '#2691d7',
         background_color: '#000000',
         display: 'standalone',

@@ -41,7 +41,7 @@ export function InstallPwaDialog() {
 
   async function handleInstallClick() {
     const accepted = await promptInstall()
-    if (accepted) toast.success("AlphaData instalado!")
+    if (accepted) toast.success("AlphaLog instalado!")
     dismiss()
   }
 
@@ -51,7 +51,7 @@ export function InstallPwaDialog() {
     <Dialog open={open} onOpenChange={(next) => !next && dismiss()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Instale o AlphaData</DialogTitle>
+          <DialogTitle>Instale o AlphaLog</DialogTitle>
           <DialogDescription>Acesse mais rápido, direto da tela inicial do seu dispositivo.</DialogDescription>
         </DialogHeader>
 

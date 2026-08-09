@@ -1,6 +1,6 @@
 import type { FuelType, MaintenanceType, PaymentMethod, RequestStatus, Role, VehicleType } from "@/types/enums"
 
-export const APP_NAME = "AlphaData"
+export const APP_NAME = "AlphaLog"
 export const SYNTHETIC_EMAIL_DOMAIN = "alphadata.internal"
 
 export const ROLE_LABELS: Record<Role, string> = {

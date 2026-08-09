@@ -33,9 +33,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
       <div className={cn("flex h-16 items-center border-b border-sidebar-border px-4", collapsed && "justify-center px-2")}>
         {collapsed ? (
-          <img src={logoStacked} alt="AlphaData" className="h-8 w-8 object-contain" />
+          <img src={logoStacked} alt="AlphaLog" className="h-8 w-8 object-contain" />
         ) : (
-          <img src={logoHorizontal} alt="AlphaData" className="h-6 w-auto" />
+          <img src={logoHorizontal} alt="AlphaLog" className="h-6 w-auto" />
         )}
       </div>
 

@@ -31,7 +31,7 @@ function pageTitleFor(pathname: string, role: Role): { title: string; subtitle: 
       ? { title: "Meus Veículos", subtitle: "Abastecimento, óleo, manutenção e checklist" }
       : { title: "Gestão da Frota", subtitle: "Indicadores, custos e histórico por veículo" }
   }
-  return { title: "AlphaData", subtitle: "" }
+  return { title: "AlphaLog", subtitle: "" }
 }
 
 export function Header() {
