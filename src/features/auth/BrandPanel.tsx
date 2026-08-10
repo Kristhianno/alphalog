@@ -1,5 +1,5 @@
 import { CheckCircle2 } from "lucide-react"
-import logoStacked from "@/assets/logo-stacked.png"
+import logoHorizontal from "@/assets/logo-horizontal.png"
 
 const BENEFITS = [
   "Rastreabilidade completa de cada entrega, do pedido à assinatura",
@@ -16,7 +16,11 @@ export function BrandPanel() {
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_45%),radial-gradient(circle_at_80%_85%,rgba(255,255,255,0.12),transparent_40%)]"
       />
       <div className="relative flex flex-col items-start gap-8">
-        <img src={logoStacked} alt="AlphaLog" className="h-24 w-auto brightness-0 invert" />
+        <img
+          src={logoHorizontal}
+          alt="AlphaLog"
+          className="h-12 w-auto self-center brightness-0 invert lg:h-14"
+        />
         <div className="max-w-sm space-y-2">
           <h1 className="text-2xl font-semibold">Gestão logística de ponta a ponta</h1>
           <p className="text-sm text-primary-foreground/80">
