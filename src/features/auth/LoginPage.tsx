@@ -13,12 +13,12 @@ export function LoginPage() {
   if (session) return <Navigate to="/" replace />
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
+    <div className="grid min-h-svh bg-sidebar lg:grid-cols-2 lg:bg-background">
       <BrandPanel />
       <div className="flex flex-col items-center justify-center gap-8 p-6 sm:p-10">
-        <img src={logoHorizontal} alt="AlphaLog" className="h-10 w-auto lg:hidden" />
+        <img src={logoHorizontal} alt="AlphaLog" className="h-14 w-auto lg:hidden" />
 
-        <div className="w-full max-w-sm space-y-6">
+        <div className="w-full max-w-sm space-y-6 rounded-2xl bg-card p-6 shadow-lg sm:p-8 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none">
           <Tabs defaultValue="entrar">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="entrar">Entrar</TabsTrigger>
