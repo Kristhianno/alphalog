@@ -96,7 +96,13 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               <p className="truncate text-xs text-sidebar-foreground/60">{ROLE_LABELS[actor.role]}</p>
             </div>
           )}
-          <Button variant="ghost" size="icon" className="size-8 shrink-0" onClick={logout} title="Sair">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
+            onClick={logout}
+            title="Sair"
+          >
             <LogOut className="size-4" />
           </Button>
         </div>

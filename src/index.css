@@ -36,13 +36,13 @@
   --color-popover: hsl(0 0% 100%);
   --color-popover-foreground: hsl(210 15% 15%);
 
-  --color-sidebar: hsl(210 20% 98%);
-  --color-sidebar-foreground: hsl(210 15% 25%);
+  --color-sidebar: hsl(222 24% 13%);
+  --color-sidebar-foreground: hsl(210 20% 88%);
   --color-sidebar-primary: hsl(203.7 70% 49.6%);
   --color-sidebar-primary-foreground: hsl(0 0% 100%);
-  --color-sidebar-accent: hsl(203.7 70% 94%);
-  --color-sidebar-accent-foreground: hsl(205.5 74% 30%);
-  --color-sidebar-border: hsl(214 20% 90%);
+  --color-sidebar-accent: hsl(203.7 50% 24%);
+  --color-sidebar-accent-foreground: hsl(0 0% 100%);
+  --color-sidebar-border: hsl(222 20% 22%);
   --color-sidebar-ring: hsl(203.7 70% 49.6%);
 
   --color-chart-1: hsl(203.7 70% 49.6%);
