@@ -9,13 +9,12 @@ import { initials } from "@/lib/format"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { resetDB } from "@/mocks/db/store"
 import { toast } from "sonner"
 import logoHorizontal from "@/assets/logo-horizontal.png"
 import logoStacked from "@/assets/logo-stacked.png"
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent() {
   const { session, actor, logout } = useAuth()
   const { collapsed, toggleCollapsed } = useSidebar()
 
@@ -47,7 +46,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               key={item.path}
               to={item.path}
               end={item.path === "/"}
-              onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
@@ -96,13 +94,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               <p className="truncate text-xs text-sidebar-foreground/60">{ROLE_LABELS[actor.role]}</p>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 shrink-0 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground"
-            onClick={logout}
-            title="Sair"
-          >
+          <Button variant="ghost" size="icon" className="size-8 shrink-0 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground" onClick={logout} title="Sair">
             <LogOut className="size-4" />
           </Button>
         </div>
@@ -133,16 +125,51 @@ export function DesktopSidebar() {
   )
 }
 
-export function MobileSidebar() {
-  const { mobileOpen, setMobileOpen } = useSidebar()
+export function MobileBottomNav() {
+  const { actor } = useAuth()
+  if (!actor) return null
+
+  const items = navItemsForRole(actor.role)
+
   return (
-    <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-      <SheetContent side="left" className="w-72 p-0">
-        <SheetHeader className="sr-only">
-          <SheetTitle>Menu de navegação</SheetTitle>
-        </SheetHeader>
-        <SidebarContent onNavigate={() => setMobileOpen(false)} />
-      </SheetContent>
-    </Sheet>
+    <nav
+      className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] lg:hidden"
+      aria-label="Navegação principal"
+    >
+      <div className="mx-auto flex max-w-md items-stretch justify-between gap-0.5 rounded-2xl border border-sidebar-border bg-sidebar px-1.5 py-1.5 shadow-lg shadow-black/25">
+        {items.map((item) => {
+          const Icon = item.icon
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === "/"}
+              className="flex flex-1 flex-col items-center gap-1 rounded-xl py-1.5 text-sidebar-foreground/60 outline-none transition-colors active:scale-95"
+            >
+              {({ isActive }) => (
+                <>
+                  <span
+                    className={cn(
+                      "flex size-8 items-center justify-center rounded-full transition-colors",
+                      isActive && "bg-primary text-primary-foreground",
+                    )}
+                  >
+                    <Icon className="size-[18px]" />
+                  </span>
+                  <span
+                    className={cn(
+                      "px-0.5 text-center text-[10px] leading-tight font-medium",
+                      isActive && "text-sidebar-foreground",
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </>
+              )}
+            </NavLink>
+          )
+        })}
+      </div>
+    </nav>
   )
 }

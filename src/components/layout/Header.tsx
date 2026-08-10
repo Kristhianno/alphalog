@@ -1,9 +1,20 @@
-import { Menu, WifiOff } from "lucide-react"
+import { LogOut, RotateCcw, WifiOff } from "lucide-react"
 import { useLocation } from "react-router-dom"
 import * as React from "react"
 import { useAuth } from "@/context/AuthContext"
-import { useSidebar } from "@/context/SidebarContext"
-import { Button } from "@/components/ui/button"
+import { ROLE_LABELS } from "@/lib/constants"
+import { initials } from "@/lib/format"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { resetDB } from "@/mocks/db/store"
+import { toast } from "sonner"
 import type { Role } from "@/types/enums"
 
 function pageTitleFor(pathname: string, role: Role): { title: string; subtitle: string } {
@@ -35,8 +46,7 @@ function pageTitleFor(pathname: string, role: Role): { title: string; subtitle: 
 }
 
 export function Header() {
-  const { actor } = useAuth()
-  const { setMobileOpen } = useSidebar()
+  const { session, actor, logout } = useAuth()
   const location = useLocation()
   const [isOffline, setIsOffline] = React.useState(!navigator.onLine)
 
@@ -51,8 +61,14 @@ export function Header() {
     }
   }, [])
 
-  if (!actor) return null
+  if (!session || !actor) return null
   const { title, subtitle } = pageTitleFor(location.pathname, actor.role)
+
+  function handleResetData() {
+    resetDB()
+    toast.success("Dados de exemplo restaurados.")
+    window.location.href = "/"
+  }
 
   return (
     <header className="sticky top-0 z-30 flex flex-col border-b border-border bg-background/95 backdrop-blur">
@@ -63,19 +79,39 @@ export function Header() {
         </div>
       )}
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Abrir menu"
-        >
-          <Menu className="size-5" />
-        </Button>
         <div className="min-w-0">
           <h1 className="truncate text-lg font-semibold leading-tight">{title}</h1>
           {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="ml-auto rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
+              aria-label="Menu da conta"
+            >
+              <Avatar className="size-9">
+                <AvatarFallback>{initials(session.user.name)}</AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <p className="truncate text-sm font-medium">{session.user.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{ROLE_LABELS[actor.role]}</p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={handleResetData}>
+              <RotateCcw className="size-4" />
+              Restaurar dados de exemplo
+            </DropdownMenuItem>
+            <DropdownMenuItem variant="destructive" onSelect={logout}>
+              <LogOut className="size-4" />
+              Sair
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   )
