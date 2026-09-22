@@ -1,6 +1,7 @@
 import { resolveFreight } from "@/domain/pricing"
 import { isDriverOnline } from "@/domain/driverAvailability"
 import { STATUS_LABELS, isActiveStatus } from "@/domain/requestStatus"
+import { deriveCurrentKm, isOilChangeOverdue, latestOilChange } from "@/domain/vehicleKm"
 import { ROLE_LABELS, STATUS_BADGE_VARIANT, VEHICLE_TYPE_LABELS } from "@/lib/constants"
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
 import { VEHICLE_TYPES, type RequestStatus, type Role } from "@/types/enums"
@@ -122,6 +123,26 @@ function vehiclesNeedingMaintenance(ctx: AiContext): AiResultItem[] {
   return maintenanceAnswer(ctx).items ?? []
 }
 
+/** Espelha exatamente os cards do Painel (Total / Hoje / Em andamento / Entregues / Total de frete). */
+function dashboardOverviewAnswer(ctx: AiContext): AiAnswer {
+  const now = new Date()
+  const todayCount = ctx.solicitacoes.filter((r) => isSameDay(new Date(r.created_at), now)).length
+  const active = ctx.solicitacoes.filter((r) => isActiveStatus(r.status)).length
+  const delivered = ctx.solicitacoes.filter((r) => r.status === "entregue").length
+  const totalFreight = ctx.solicitacoes.reduce((sum, r) => sum + freightOf(ctx, r), 0)
+
+  return {
+    text: `Painel: ${ctx.solicitacoes.length} solicitação(ões) no total, ${todayCount} criada(s) hoje, ${active} em andamento e ${delivered} entregue(s) — somando ${formatCurrency(totalFreight)} em frete (todas as solicitações, qualquer status).`,
+    stats: [
+      { label: "Total", value: String(ctx.solicitacoes.length) },
+      { label: "Hoje", value: String(todayCount) },
+      { label: "Em andamento", value: String(active) },
+      { label: "Entregues", value: String(delivered), tone: "success" },
+      { label: "Total de frete", value: formatCurrency(totalFreight) },
+    ],
+  }
+}
+
 function operationalSummary(ctx: AiContext): AiAnswer {
   const active = ctx.solicitacoes.filter((r) => isActiveStatus(r.status))
   const now = new Date()
@@ -229,6 +250,22 @@ function requestLookupAnswer(ctx: AiContext, requestNumber: number): AiAnswer {
 }
 
 // --- Motoristas -----------------------------------------------------------
+
+/** Espelha exatamente os cards da tela Gestão de Motoristas. */
+function driversStatsAnswer(ctx: AiContext): AiAnswer {
+  const totalMotoristas = ctx.motoristas.length
+  const entreguesTotal = ctx.solicitacoes.filter((r) => r.status === "entregue" && r.driver_id).length
+  const corridasAtivas = ctx.solicitacoes.filter((r) => r.driver_id && isActiveStatus(r.status)).length
+
+  return {
+    text: `A frota de motoristas tem ${totalMotoristas} motorista(s) cadastrado(s): ${entreguesTotal} entrega(s) concluída(s) no total e ${corridasAtivas} corrida(s) ativa(s) agora.`,
+    stats: [
+      { label: "Total de motoristas", value: String(totalMotoristas) },
+      { label: "Entregas concluídas", value: String(entreguesTotal), tone: "success" },
+      { label: "Corridas ativas agora", value: String(corridasAtivas) },
+    ],
+  }
+}
 
 function driversOnlineAnswer(ctx: AiContext): AiAnswer {
   const online = ctx.motoristas.filter((m) => isDriverOnline(m.id, ctx.solicitacoes))
@@ -453,29 +490,8 @@ function addonModuleAnswer(): AiAnswer {
 
 // --- Frota -----------------------------------------------------------
 
-function currentKmByVehicle(ctx: AiContext): Map<string, number> {
-  const map = new Map<string, number>()
-  const bump = (vehicleId: string, km: number) => {
-    if (km > (map.get(vehicleId) ?? 0)) map.set(vehicleId, km)
-  }
-  for (const log of ctx.combustivel) bump(log.vehicle_id, log.km_final)
-  for (const m of ctx.manutencao) bump(m.vehicle_id, m.current_km)
-  for (const c of ctx.checklists) bump(c.vehicle_id, c.current_km)
-  return map
-}
-
-function latestOilByVehicle(ctx: AiContext): Map<string, TrocaDeOleo> {
-  const map = new Map<string, TrocaDeOleo>()
-  for (const o of ctx.oleo) {
-    const prev = map.get(o.vehicle_id)
-    if (!prev || new Date(o.change_date) > new Date(prev.change_date)) map.set(o.vehicle_id, o)
-  }
-  return map
-}
-
+/** Usa a mesma derivação de KM e regra de vencimento de óleo da tela Gestão da Frota (regra 6/7). */
 function maintenanceAnswer(ctx: AiContext): AiAnswer {
-  const kmByVehicle = currentKmByVehicle(ctx)
-  const oilByVehicle = latestOilByVehicle(ctx)
   const items: AiResultItem[] = []
 
   for (const v of ctx.veiculos) {
@@ -489,11 +505,16 @@ function maintenanceAnswer(ctx: AiContext): AiAnswer {
       continue
     }
 
-    const oil = oilByVehicle.get(v.id)
-    const km = kmByVehicle.get(v.id)
-    if (!oil || km == null) continue
+    const oil = latestOilChange(v.id, ctx.oleo)
+    if (!oil) continue
+    const currentKm = deriveCurrentKm({
+      vehicleId: v.id,
+      fuelLogs: ctx.combustivel,
+      oilChanges: ctx.oleo,
+      maintenanceLogs: ctx.manutencao,
+    })
+    const over = currentKm - oil.next_change_km
 
-    const over = km - oil.next_change_km
     if (over >= 0) {
       items.push({
         id: v.id,
@@ -516,6 +537,37 @@ function maintenanceAnswer(ctx: AiContext): AiAnswer {
   }
 
   return { text: `Encontrei ${items.length} veículo(s) que pedem atenção da manutenção:`, items }
+}
+
+/** Espelha os cards da tela Gestão da Frota (litros, gasto e consumo médio somam todo o histórico). */
+function fleetCostsAnswer(ctx: AiContext): AiAnswer {
+  const litersTotal = ctx.combustivel.reduce((sum, l) => sum + l.liters, 0)
+  const gastoTotal =
+    ctx.combustivel.reduce((sum, l) => sum + l.liters * l.fuel_price, 0) +
+    ctx.oleo.reduce((sum, l) => sum + l.service_cost, 0) +
+    ctx.manutencao.reduce((sum, l) => sum + l.service_cost, 0)
+  const kmTotal = ctx.combustivel.reduce((sum, l) => sum + Math.max(0, l.km_final - l.km_initial), 0)
+  const consumoMedio = litersTotal > 0 ? kmTotal / litersTotal : 0
+  const overdueCount = ctx.veiculos.filter((v) => {
+    const currentKm = deriveCurrentKm({
+      vehicleId: v.id,
+      fuelLogs: ctx.combustivel,
+      oilChanges: ctx.oleo,
+      maintenanceLogs: ctx.manutencao,
+    })
+    return isOilChangeOverdue({ currentKm, vehicleId: v.id, oilChanges: ctx.oleo })
+  }).length
+
+  return {
+    text: `A frota tem ${ctx.veiculos.length} veículo(s), com ${litersTotal.toFixed(0)} litros abastecidos e ${formatCurrency(gastoTotal)} gastos no total (combustível + óleo + manutenção), consumo médio de ${consumoMedio.toFixed(1)} km/L.${overdueCount > 0 ? ` ${overdueCount} veículo(s) com óleo vencido.` : " Nenhum veículo com óleo vencido."}`,
+    stats: [
+      { label: "Veículos", value: String(ctx.veiculos.length) },
+      { label: "Litros totais", value: `${litersTotal.toFixed(0)} L` },
+      { label: "Gasto total", value: formatCurrency(gastoTotal) },
+      { label: "Consumo médio", value: `${consumoMedio.toFixed(1)} km/L` },
+      { label: "Óleo vencido", value: String(overdueCount), tone: overdueCount > 0 ? "destructive" : "success" },
+    ],
+  }
 }
 
 function fuelAnswer(ctx: AiContext): AiAnswer {
@@ -621,19 +673,22 @@ function topClientsAnswer(ctx: AiContext): AiAnswer {
 // --- Sugestões (chips) -----------------------------------------------------------
 
 export const SUGGESTED_QUESTIONS: AiQuestion[] = [
+  { id: "painel", category: "Operação", question: "Me dá os números do painel: total, hoje, em andamento, entregues e frete.", run: dashboardOverviewAnswer },
   { id: "resumo", category: "Operação", question: "Como está a operação agora?", run: operationalSummary },
   { id: "paradas", category: "Operação", question: "Quais solicitações estão em aberto há mais tempo?", run: openRequestsAnswer },
   { id: "canceladas", category: "Operação", question: "Tivemos cancelamentos recentes? Por quê?", run: cancelledRequestsAnswer },
+  { id: "motoristas-stats", category: "Motoristas", question: "Quantos motoristas temos, entregas concluídas e corridas ativas?", run: driversStatsAnswer },
   { id: "online", category: "Motoristas", question: "Quais motoristas estão rodando agora?", run: driversOnlineAnswer },
   { id: "ranking-motoristas", category: "Motoristas", question: "Qual motorista mais entregou nos últimos 30 dias?", run: topDriversAnswer },
   { id: "cnh", category: "Motoristas", question: "Algum motorista está com a CNH perto de vencer?", run: cnhAnswer },
+  { id: "frota-custos", category: "Frota", question: "Quantos litros, quanto gastamos e qual o consumo médio da frota?", run: fleetCostsAnswer },
   { id: "manutencao", category: "Frota", question: "Algum veículo precisa de manutenção ou troca de óleo?", run: maintenanceAnswer },
   { id: "combustivel", category: "Frota", question: "Qual veículo consumiu mais combustível este mês?", run: fuelAnswer },
   { id: "checklist", category: "Frota", question: "Algum checklist encontrou problema recente?", run: checklistProblemsAnswer },
+  { id: "frota-geral", category: "Frota", question: "Quantos veículos temos e de quais tipos?", run: fleetOverviewAnswer },
   { id: "faturamento-semana", category: "Financeiro", question: "Quanto faturamos nos últimos 7 dias?", run: (ctx) => revenueAnswer(ctx, "semana") },
   { id: "faturamento-mes", category: "Financeiro", question: "Quanto faturamos nos últimos 30 dias?", run: (ctx) => revenueAnswer(ctx, "mes") },
   { id: "top-clientes", category: "Financeiro", question: "Quais clientes mais geram receita?", run: topClientsAnswer },
-  { id: "frota-geral", category: "Frota", question: "Quantos veículos temos e de quais tipos?", run: fleetOverviewAnswer },
   { id: "usuarios", category: "Usuários", question: "Quantos usuários temos, por papel?", run: usersOverviewAnswer },
   { id: "clientes", category: "Clientes", question: "Quantos clientes temos cadastrados?", run: clientsOverviewAnswer },
 ]
@@ -669,6 +724,16 @@ const INTENTS: Intent[] = [
   { match: (t) => t.includes("checklist") || t.includes("reprovado"), run: checklistProblemsAnswer },
   { match: (t) => t.includes("almoco") && t.includes("semana"), run: (ctx) => lunchBreaksAnswer(ctx, "semana") },
   { match: (t) => t.includes("almoco"), run: (ctx) => lunchBreaksAnswer(ctx, "mes") },
+  {
+    match: (t) =>
+      t.includes("litros totais") ||
+      t.includes("gasto total") ||
+      t.includes("custo total") ||
+      t.includes("consumo medio") ||
+      t.includes("km/l") ||
+      t.includes("kml"),
+    run: fleetCostsAnswer,
+  },
   { match: (t) => t.includes("oleo") || t.includes("manutencao") || t.includes("revisao"), run: maintenanceAnswer },
   { match: (t) => t.includes("combustivel") || t.includes("abasteci") || t.includes("litro"), run: fuelAnswer },
   { match: (t) => t.includes("cancelad"), run: cancelledRequestsAnswer },
@@ -696,6 +761,16 @@ const INTENTS: Intent[] = [
   {
     match: (t) => (t.includes("veiculo") || t.includes("frota")) && (t.includes("quantos") || t.includes("quantas") || t.includes("temos") || t.includes("tipos") || t.includes("cadastrado")),
     run: fleetOverviewAnswer,
+  },
+  {
+    match: (t) =>
+      (t.includes("motorista") && (t.includes("quantos") || t.includes("quantas") || t.includes("total") || t.includes("cadastrado"))) ||
+      t.includes("corridas ativas"),
+    run: driversStatsAnswer,
+  },
+  {
+    match: (t) => t.includes("painel") || (t.includes("total") && t.includes("frete")) || t.includes("frete total"),
+    run: dashboardOverviewAnswer,
   },
   { match: (t) => t.includes("online") || t.includes("rodando") || t.includes("disponivel"), run: driversOnlineAnswer },
   {
