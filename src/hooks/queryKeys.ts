@@ -23,7 +23,10 @@ export const qk = {
   manutencao: { all: ["manutencao"] as const },
   checklists: { all: ["checklists"] as const },
   pausasAlmoco: { all: ["pausasAlmoco"] as const },
-  localizacao: { detail: (driverId: string) => ["localizacao", driverId] as const },
+  localizacao: {
+    all: ["localizacao"] as const,
+    detail: (driverId: string) => ["localizacao", driverId] as const,
+  },
 }
 
 /** Grupos de chaves afetados por qualquer mutação de solicitação (aceite/status/cancelar/excluir). */

@@ -1,19 +1,23 @@
 import { resolveFreight } from "@/domain/pricing"
 import { isDriverOnline } from "@/domain/driverAvailability"
 import { STATUS_LABELS, isActiveStatus } from "@/domain/requestStatus"
-import { STATUS_BADGE_VARIANT } from "@/lib/constants"
-import { formatCurrency, formatDate } from "@/lib/format"
+import { ROLE_LABELS, STATUS_BADGE_VARIANT, VEHICLE_TYPE_LABELS } from "@/lib/constants"
+import { formatCurrency, formatDate, formatDateTime } from "@/lib/format"
+import { VEHICLE_TYPES, type RequestStatus, type Role } from "@/types/enums"
 import type {
   Cliente,
   ChecklistVeiculo,
+  LocalizacaoMotorista,
   LogCombustivel,
   Motorista,
+  PausaAlmoco,
   PrecoDeFrete,
   RegistroManutencao,
   Solicitacao,
   TrocaDeOleo,
   Veiculo,
 } from "@/types/entities"
+import type { UsuarioComPapel } from "@/mocks/api/usuarios.api"
 
 /** Dados mockados disponíveis para o assistente responder — tudo já vem dos hooks existentes. */
 export interface AiContext {
@@ -21,11 +25,14 @@ export interface AiContext {
   motoristas: Motorista[]
   veiculos: Veiculo[]
   clientes: Cliente[]
+  usuarios: UsuarioComPapel[]
   precos: PrecoDeFrete[]
   combustivel: LogCombustivel[]
   oleo: TrocaDeOleo[]
   manutencao: RegistroManutencao[]
   checklists: ChecklistVeiculo[]
+  pausasAlmoco: PausaAlmoco[]
+  localizacoes: LocalizacaoMotorista[]
 }
 
 export type AiBadgeVariant = (typeof STATUS_BADGE_VARIANT)[keyof typeof STATUS_BADGE_VARIANT]
@@ -299,9 +306,148 @@ function driverLookupAnswer(ctx: AiContext, driver: Motorista): AiAnswer {
   const active = own.filter((r) => isActiveStatus(r.status))
   const online = isDriverOnline(driver.id, ctx.solicitacoes)
   const totalFreight = delivered.reduce((sum, r) => sum + freightOf(ctx, r), 0)
+  const vehicle = driver.vehicle_id ? ctx.veiculos.find((v) => v.id === driver.vehicle_id) : undefined
+  const types = driver.enabled_vehicle_types.map((t) => VEHICLE_TYPE_LABELS[t]).join(", ")
 
   return {
-    text: `${driver.name} já teve ${own.length} corrida(s) atribuída(s): ${delivered.length} entregue(s) (${formatCurrency(totalFreight)} em frete) e ${active.length} em andamento agora. Status atual: ${online ? "rodando" : "disponível"}.`,
+    text: `${driver.name} (${driver.is_fixed ? "fixo" : "agregado"}) já teve ${own.length} corrida(s) atribuída(s): ${delivered.length} entregue(s) (${formatCurrency(totalFreight)} em frete) e ${active.length} em andamento agora. Status atual: ${online ? "rodando" : "disponível"}. Habilitado para: ${types || "nenhum tipo cadastrado"}.${vehicle ? ` Veículo fixo: ${vehicle.plate}.` : ""} CNH válida até ${formatDate(driver.cnh_valid_until)}.`,
+  }
+}
+
+function locationAnswer(ctx: AiContext, driver: Motorista): AiAnswer {
+  const loc = ctx.localizacoes.find((l) => l.driver_id === driver.id)
+  if (!loc) {
+    return { text: `Não há localização recente registrada para ${driver.name} (rastreamento simulado só existe para corridas em rota).` }
+  }
+  const linkedRequest = loc.delivery_request_id ? ctx.solicitacoes.find((r) => r.id === loc.delivery_request_id) : undefined
+
+  return {
+    text: `${driver.name} foi visto a ${loc.speed ?? 0} km/h${linkedRequest ? `, a caminho da entrega da solicitação #${linkedRequest.request_number}` : ""}. Última atualização: ${formatDateTime(loc.updated_at)}.`,
+  }
+}
+
+// --- Frota (visão geral e busca) -----------------------------------------------------------
+
+function fleetOverviewAnswer(ctx: AiContext): AiAnswer {
+  const byType = new Map<string, number>()
+  for (const v of ctx.veiculos) byType.set(v.type, (byType.get(v.type) ?? 0) + 1)
+  const active = ctx.veiculos.filter((v) => v.status === "active").length
+  const maintenance = ctx.veiculos.filter((v) => v.status === "maintenance").length
+  const inactive = ctx.veiculos.filter((v) => v.status === "inactive").length
+
+  return {
+    text: `A frota tem ${ctx.veiculos.length} veículo(s) cadastrado(s): ${active} ativo(s), ${maintenance} em manutenção e ${inactive} inativo(s).`,
+    stats: VEHICLE_TYPES.filter((t) => byType.has(t)).map((t) => ({
+      label: VEHICLE_TYPE_LABELS[t],
+      value: String(byType.get(t) ?? 0),
+    })),
+  }
+}
+
+function vehicleLookupAnswer(ctx: AiContext, v: Veiculo): AiAnswer {
+  const driver = ctx.motoristas.find((m) => m.vehicle_id === v.id)
+  const activeRequest = ctx.solicitacoes.find((r) => r.vehicle_id === v.id && isActiveStatus(r.status))
+  const statusLabel = v.status === "active" ? "ativo" : v.status === "maintenance" ? "em manutenção" : "inativo"
+
+  const lines = [
+    `${v.plate} — ${v.brand} ${v.model} (${v.year}), ${VEHICLE_TYPE_LABELS[v.type]}.`,
+    `Status: ${statusLabel}. Capacidade: ${v.capacity.toLocaleString("pt-BR")} kg (${v.length}m x ${v.width}m x ${v.height}m).`,
+    driver ? `Motorista fixo: ${driver.name}.` : "Sem motorista fixo vinculado.",
+    activeRequest ? `Em uso agora na solicitação #${activeRequest.request_number}.` : "Sem corrida ativa no momento.",
+  ]
+
+  return { text: lines.join(" ") }
+}
+
+// --- Usuários -----------------------------------------------------------
+
+const ROLE_ORDER: Role[] = ["admin", "gestor", "assistente_logistico", "motorista", "cliente"]
+
+function usersOverviewAnswer(ctx: AiContext): AiAnswer {
+  const counts = new Map<Role, number>()
+  for (const u of ctx.usuarios) counts.set(u.role, (counts.get(u.role) ?? 0) + 1)
+
+  return {
+    text: `A base tem ${ctx.usuarios.length} usuário(s) com acesso ao sistema.`,
+    stats: ROLE_ORDER.filter((r) => counts.has(r)).map((r) => ({ label: ROLE_LABELS[r], value: String(counts.get(r) ?? 0) })),
+  }
+}
+
+// --- Clientes -----------------------------------------------------------
+
+function clientsOverviewAnswer(ctx: AiContext): AiAnswer {
+  const byRegion = new Map<string, number>()
+  for (const c of ctx.clientes) byRegion.set(c.region, (byRegion.get(c.region) ?? 0) + 1)
+  const regions = [...byRegion.entries()].sort((a, b) => b[1] - a[1])
+
+  return {
+    text: `${ctx.clientes.length} cliente(s) cadastrado(s), em ${regions.length} região(ões).`,
+    items: ctx.clientes.slice(0, 8).map((c) => ({
+      id: c.id,
+      title: c.name,
+      subtitle: `${c.city}/${c.state} — região ${c.region}`,
+    })),
+  }
+}
+
+function clientLookupAnswer(ctx: AiContext, c: Cliente): AiAnswer {
+  const requests = ctx.solicitacoes.filter((r) => r.client_id === c.id)
+  const delivered = requests.filter((r) => r.status === "entregue")
+  const active = requests.filter((r) => isActiveStatus(r.status))
+  const total = delivered.reduce((sum, r) => sum + freightOf(ctx, r), 0)
+
+  return {
+    text: `${c.name} — ${c.city}/${c.state}, região ${c.region}. ${requests.length} solicitação(ões) no total, ${active.length} em andamento e ${delivered.length} entregue(s), somando ${formatCurrency(total)} em frete. Contato: ${c.phone}.`,
+  }
+}
+
+// --- Pausas de almoço -----------------------------------------------------------
+
+function lunchBreaksAnswer(ctx: AiContext, timeframe: "semana" | "mes" = "mes"): AiAnswer {
+  const rangeMs = (timeframe === "semana" ? 7 : 30) * DAY_MS
+  const recent = ctx.pausasAlmoco.filter((p) => Date.now() - new Date(`${p.break_date}T00:00:00`).getTime() <= rangeMs)
+  const label = timeframe === "semana" ? "últimos 7 dias" : "últimos 30 dias"
+
+  if (recent.length === 0) {
+    return { text: `Nenhuma pausa de almoço registrada nos ${label}.` }
+  }
+
+  const totalCost = recent.reduce((sum, p) => sum + (p.valor ?? 0), 0)
+  const byDriver = new Map<string, number>()
+  for (const p of recent) byDriver.set(p.driver_id, (byDriver.get(p.driver_id) ?? 0) + 1)
+
+  return {
+    text: `${recent.length} pausa(s) de almoço registrada(s) nos ${label}, somando ${formatCurrency(totalCost)}.`,
+    items: [...byDriver.entries()].map(([driverId, count]) => ({
+      id: driverId,
+      title: motoristaName(ctx, driverId),
+      subtitle: `${count} pausa${count === 1 ? "" : "s"} registrada${count === 1 ? "" : "s"}`,
+    })),
+  }
+}
+
+// --- Solicitações por status -----------------------------------------------------------
+
+function requestsByStatusAnswer(ctx: AiContext, status: RequestStatus): AiAnswer {
+  const matches = ctx.solicitacoes.filter((r) => r.status === status)
+  if (matches.length === 0) {
+    return { text: `Não há solicitações com status "${STATUS_LABELS[status]}" no momento.` }
+  }
+
+  return {
+    text: `${matches.length} solicitação(ões) com status "${STATUS_LABELS[status]}":`,
+    items: matches.slice(0, 8).map((r) => ({
+      id: r.id,
+      title: `#${r.request_number} — ${clienteName(ctx, r.client_id)}`,
+      subtitle: `${humanizeOpenSince(r.created_at)}${r.driver_id ? ` • ${motoristaName(ctx, r.driver_id)}` : ""}`,
+      badge: { label: STATUS_LABELS[r.status], variant: STATUS_BADGE_VARIANT[r.status] },
+    })),
+  }
+}
+
+function addonModuleAnswer(): AiAnswer {
+  return {
+    text: "Financeiro e Fiscal aparecem no menu como módulos adicionais — ainda não estão habilitados nesta conta, então não tenho dados para responder sobre eles.",
   }
 }
 
@@ -487,6 +633,9 @@ export const SUGGESTED_QUESTIONS: AiQuestion[] = [
   { id: "faturamento-semana", category: "Financeiro", question: "Quanto faturamos nos últimos 7 dias?", run: (ctx) => revenueAnswer(ctx, "semana") },
   { id: "faturamento-mes", category: "Financeiro", question: "Quanto faturamos nos últimos 30 dias?", run: (ctx) => revenueAnswer(ctx, "mes") },
   { id: "top-clientes", category: "Financeiro", question: "Quais clientes mais geram receita?", run: topClientsAnswer },
+  { id: "frota-geral", category: "Frota", question: "Quantos veículos temos e de quais tipos?", run: fleetOverviewAnswer },
+  { id: "usuarios", category: "Usuários", question: "Quantos usuários temos, por papel?", run: usersOverviewAnswer },
+  { id: "clientes", category: "Clientes", question: "Quantos clientes temos cadastrados?", run: clientsOverviewAnswer },
 ]
 
 // --- Roteador de texto livre -----------------------------------------------------------
@@ -504,9 +653,22 @@ interface Intent {
   run: (ctx: AiContext) => AiAnswer
 }
 
+const STATUS_KEYWORDS: [RequestStatus, string[]][] = [
+  ["agendada", ["agendada", "agendadas"]],
+  ["solicitada", ["solicitada", "solicitadas"]],
+  ["aceita", ["aceita", "aceitas"]],
+  ["pendente_coleta", ["pendente de coleta", "pendentes de coleta"]],
+  ["coletada", ["coletada", "coletadas"]],
+  ["em_rota", ["em rota"]],
+  ["pendente_entrega", ["pendente de entrega", "pendentes de entrega"]],
+  ["entregue", ["entregue", "entregues", "concluida", "concluidas"]],
+]
+
 const INTENTS: Intent[] = [
   { match: (t) => t.includes("cnh") || t.includes("habilitacao"), run: cnhAnswer },
   { match: (t) => t.includes("checklist") || t.includes("reprovado"), run: checklistProblemsAnswer },
+  { match: (t) => t.includes("almoco") && t.includes("semana"), run: (ctx) => lunchBreaksAnswer(ctx, "semana") },
+  { match: (t) => t.includes("almoco"), run: (ctx) => lunchBreaksAnswer(ctx, "mes") },
   { match: (t) => t.includes("oleo") || t.includes("manutencao") || t.includes("revisao"), run: maintenanceAnswer },
   { match: (t) => t.includes("combustivel") || t.includes("abasteci") || t.includes("litro"), run: fuelAnswer },
   { match: (t) => t.includes("cancelad"), run: cancelledRequestsAnswer },
@@ -522,16 +684,33 @@ const INTENTS: Intent[] = [
     match: (t) => t.includes("cliente") && (t.includes("mais") || t.includes("fatur") || t.includes("receita")),
     run: topClientsAnswer,
   },
+  {
+    match: (t) => t.includes("cliente") && (t.includes("quantos") || t.includes("quantas") || t.includes("cadastrado") || t.includes("temos") || t.includes("lista")),
+    run: clientsOverviewAnswer,
+  },
   { match: (t) => t.includes("fatur") || t.includes("receita"), run: (ctx) => revenueAnswer(ctx, "mes") },
+  {
+    match: (t) => t.includes("usuario") || t.includes("conta de acesso") || t.includes("contas de acesso") || t.includes("equipe"),
+    run: usersOverviewAnswer,
+  },
+  {
+    match: (t) => (t.includes("veiculo") || t.includes("frota")) && (t.includes("quantos") || t.includes("quantas") || t.includes("temos") || t.includes("tipos") || t.includes("cadastrado")),
+    run: fleetOverviewAnswer,
+  },
   { match: (t) => t.includes("online") || t.includes("rodando") || t.includes("disponivel"), run: driversOnlineAnswer },
   {
     match: (t) => t.includes("mais entreg") || t.includes("ranking") || t.includes("produtiv") || t.includes("desempenho"),
     run: topDriversAnswer,
   },
   {
+    match: (t) => t.includes("quantas entreg") || t.includes("quantos pedido") || t.includes("quantas solicitac") || t.includes("entregas concluidas") || t.includes("entregas feitas"),
+    run: (ctx) => revenueAnswer(ctx, "mes"),
+  },
+  {
     match: (t) => t.includes("parada") || t.includes("aberto ha") || t.includes("atencao") || t.includes("atrasad") || t.includes("risco"),
     run: openRequestsAnswer,
   },
+  { match: (t) => t.includes("financeiro") || t.includes("fiscal"), run: addonModuleAnswer },
   {
     match: (t) => t.includes("resumo") || t.includes("panorama") || t.includes("visao geral") || t.includes("central de intelig") || t.includes("como esta a operacao"),
     run: operationalSummary,
@@ -543,9 +722,10 @@ export function answerFreeText(raw: string, ctx: AiContext): AiAnswer {
   const t = normalize(trimmedRaw)
 
   if (!t) {
-    return { text: "Pode perguntar sobre solicitações, motoristas, frota ou financeiro — ou escolher uma sugestão abaixo." }
+    return { text: "Pode perguntar sobre solicitações, motoristas, frota, usuários, clientes ou financeiro — ou escolher uma sugestão abaixo." }
   }
 
+  // 1. Número de solicitação (isolado, ou junto de "solicitação"/"pedido"/"entrega"/"#")
   const bareNumberMatch = trimmedRaw.match(/^#?\s*(\d{3,6})$/)
   if (bareNumberMatch) {
     return requestLookupAnswer(ctx, Number(bareNumberMatch[1]))
@@ -555,16 +735,38 @@ export function answerFreeText(raw: string, ctx: AiContext): AiAnswer {
     return requestLookupAnswer(ctx, Number(contextualNumberMatch[1]))
   }
 
+  // 2. Placa de veículo conhecida, mencionada em qualquer lugar do texto
+  const mentionedVehicle = ctx.veiculos.find((v) => t.includes(v.plate.toLowerCase()))
+  if (mentionedVehicle) {
+    return vehicleLookupAnswer(ctx, mentionedVehicle)
+  }
+
+  // 3. Cliente conhecido, mencionado pelo nome (razão social completa)
+  const mentionedClient = ctx.clientes.find((c) => t.includes(normalize(c.name)))
+  if (mentionedClient) {
+    return clientLookupAnswer(ctx, mentionedClient)
+  }
+
+  // 4. Motorista conhecido, mencionado pelo primeiro nome
   const mentionedDriver = ctx.motoristas.find((m) => t.includes(normalize(m.name.split(" ")[0])))
-  if (mentionedDriver && (t.includes("corrida") || t.includes("entreg") || t.includes("quantas") || t.includes("produtiv") || t.includes("desempenho"))) {
+  if (mentionedDriver) {
+    if (t.includes("onde") || t.includes("localiza") || t.includes("posicao") || t.includes("rastre")) {
+      return locationAnswer(ctx, mentionedDriver)
+    }
     return driverLookupAnswer(ctx, mentionedDriver)
   }
 
+  // 5. Palavras-chave de tópicos gerais
   for (const intent of INTENTS) {
     if (intent.match(t)) return intent.run(ctx)
   }
 
+  // 6. Contagem de solicitações por status ("quantas estão pendentes de entrega", etc.)
+  for (const [status, keywords] of STATUS_KEYWORDS) {
+    if (keywords.some((k) => t.includes(k))) return requestsByStatusAnswer(ctx, status)
+  }
+
   return {
-    text: "Ainda não sei responder isso com os dados que tenho — mas posso ajudar com solicitações em aberto, motoristas, manutenção da frota ou faturamento. Tente uma das sugestões abaixo, ou pergunte por um número de solicitação, por exemplo “status da #1025”.",
+    text: "Ainda não sei responder isso com os dados que tenho — mas posso ajudar com solicitações, motoristas, frota, usuários, clientes ou financeiro. Tente uma das sugestões abaixo, pergunte por um número de solicitação (ex.: “status da #1025”), uma placa, ou o nome de um motorista/cliente.",
   }
 }

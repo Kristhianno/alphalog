@@ -12,3 +12,8 @@ export async function getLocalizacaoMotorista(
   await simulateLatency()
   return getDB().localizacoes.find((l) => l.driver_id === driverId)
 }
+
+export async function listLocalizacoes(): Promise<LocalizacaoMotorista[]> {
+  await simulateLatency()
+  return getDB().localizacoes
+}

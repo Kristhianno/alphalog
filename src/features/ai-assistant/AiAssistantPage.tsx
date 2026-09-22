@@ -5,11 +5,14 @@ import { useSolicitacoesList } from "@/hooks/useSolicitacoes"
 import { useMotoristasList } from "@/hooks/useMotoristas"
 import { useVeiculosList } from "@/hooks/useVeiculos"
 import { useClientesList } from "@/hooks/useClientes"
+import { useUsuariosList } from "@/hooks/useUsuarios"
 import { usePrecosList } from "@/hooks/usePrecos"
 import { useCombustivelList } from "@/hooks/useCombustivel"
 import { useTrocasDeOleoList } from "@/hooks/useOleo"
 import { useRegistrosManutencaoList } from "@/hooks/useManutencao"
 import { useChecklistsList } from "@/hooks/useChecklists"
+import { usePausasAlmocoList } from "@/hooks/usePausasAlmoco"
+import { useLocalizacoesList } from "@/hooks/useLocalizacao"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -32,7 +35,7 @@ interface ChatMessage {
 const WELCOME_MESSAGE: ChatMessage = {
   id: "welcome",
   role: "assistant",
-  text: 'Olá! Sou o copiloto de operação da AlphaLog — respondo com base nos dados atuais do sistema (solicitações, motoristas, frota e financeiro). Toque em uma sugestão abaixo ou digite sua pergunta. Também entendo consultas por número, como "status da #1025".',
+  text: 'Olá! Sou o copiloto de operação da AlphaLog — respondo com base nos dados atuais do sistema (solicitações, motoristas, frota, usuários, clientes e financeiro). Toque em uma sugestão abaixo ou digite sua pergunta livremente. Também entendo consultas diretas por número de solicitação ("status da #1025"), placa de veículo, ou nome de motorista/cliente.',
 }
 
 function wait(ms: number) {
@@ -45,13 +48,17 @@ export function AiAssistantPage() {
   const { data: motoristas, isLoading: loadingMotoristas } = useMotoristasList()
   const { data: veiculos, isLoading: loadingVeiculos } = useVeiculosList()
   const { data: clientes, isLoading: loadingClientes } = useClientesList()
+  const { data: usuarios, isLoading: loadingUsuarios } = useUsuariosList()
   const { data: precos } = usePrecosList()
   const { data: combustivel } = useCombustivelList()
   const { data: oleo } = useTrocasDeOleoList()
   const { data: manutencao } = useRegistrosManutencaoList()
   const { data: checklists } = useChecklistsList()
+  const { data: pausasAlmoco } = usePausasAlmocoList()
+  const { data: localizacoes } = useLocalizacoesList()
 
-  const isLoading = loadingSolicitacoes || loadingMotoristas || loadingVeiculos || loadingClientes
+  const isLoading =
+    loadingSolicitacoes || loadingMotoristas || loadingVeiculos || loadingClientes || loadingUsuarios
 
   const ctx: AiContext = React.useMemo(
     () => ({
@@ -59,13 +66,29 @@ export function AiAssistantPage() {
       motoristas: motoristas ?? [],
       veiculos: veiculos ?? [],
       clientes: clientes ?? [],
+      usuarios: usuarios ?? [],
       precos: precos ?? [],
       combustivel: combustivel ?? [],
       oleo: oleo ?? [],
       manutencao: manutencao ?? [],
       checklists: checklists ?? [],
+      pausasAlmoco: pausasAlmoco ?? [],
+      localizacoes: localizacoes ?? [],
     }),
-    [solicitacoes, motoristas, veiculos, clientes, precos, combustivel, oleo, manutencao, checklists],
+    [
+      solicitacoes,
+      motoristas,
+      veiculos,
+      clientes,
+      usuarios,
+      precos,
+      combustivel,
+      oleo,
+      manutencao,
+      checklists,
+      pausasAlmoco,
+      localizacoes,
+    ],
   )
 
   const [messages, setMessages] = React.useState<ChatMessage[]>([WELCOME_MESSAGE])
