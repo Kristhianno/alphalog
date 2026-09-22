@@ -42,6 +42,9 @@ function pageTitleFor(pathname: string, role: Role): { title: string; subtitle: 
       ? { title: "Meus Veículos", subtitle: "Abastecimento, óleo, manutenção e checklist" }
       : { title: "Gestão da Frota", subtitle: "Indicadores, custos e histórico por veículo" }
   }
+  if (pathname.startsWith("/assistente-ia")) {
+    return { title: "Assistente IA", subtitle: "Pergunte sobre a operação e receba respostas em tempo real" }
+  }
   return { title: "AlphaLog", subtitle: "" }
 }
 

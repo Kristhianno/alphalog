@@ -1,4 +1,4 @@
-import { LayoutDashboard, Package, Truck, Users, Warehouse } from "lucide-react"
+import { LayoutDashboard, Package, Sparkles, Truck, Users, Warehouse } from "lucide-react"
 import type { Role } from "@/types/enums"
 
 export interface NavItem {
@@ -37,6 +37,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Usuários",
     path: "/usuarios",
     icon: Users,
+    roles: ["admin", "gestor", "assistente_logistico"],
+  },
+  {
+    label: "Assistente IA",
+    path: "/assistente-ia",
+    icon: Sparkles,
     roles: ["admin", "gestor", "assistente_logistico"],
   },
 ]

@@ -9,6 +9,7 @@ import { RequestsPage } from "@/features/requests/RequestsPage"
 import { UsersPage } from "@/features/users/UsersPage"
 import { DriversPage } from "@/features/drivers/DriversPage"
 import { VehiclesPage } from "@/features/vehicles/VehiclesPage"
+import { AiAssistantPage } from "@/features/ai-assistant/AiAssistantPage"
 import { AccessRestrictedPage } from "@/pages/AccessRestrictedPage"
 import { NotFoundPage } from "@/pages/NotFoundPage"
 
@@ -76,6 +77,14 @@ export function AppRouter() {
           element={
             <RequireRole>
               <VehiclesPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/assistente-ia"
+          element={
+            <RequireRole>
+              <AiAssistantPage />
             </RequireRole>
           }
         />

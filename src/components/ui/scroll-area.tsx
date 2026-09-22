@@ -14,7 +14,10 @@ function ScrollArea({
       className={cn("relative overflow-hidden", className)}
       {...props}
     >
-      <ScrollAreaPrimitive.Viewport className="size-full rounded-[inherit]">
+      {/* Radix wraps children in a `display: table` div to measure content size (min-width: 100%),
+          which sizes to the unwrapped max-content width instead of the viewport — forcing it back
+          to a block fixes text wrapping for flex/prose content (radix-ui/primitives#1817). */}
+      <ScrollAreaPrimitive.Viewport className="size-full rounded-[inherit] [&>div]:!block [&>div]:!min-w-0">
         {children}
       </ScrollAreaPrimitive.Viewport>
       <ScrollBar />
