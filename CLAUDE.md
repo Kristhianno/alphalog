@@ -2,12 +2,8 @@
 
 O site de produção é o Cloudflare Pages **alphalog** (https://alphalog.pages.dev).
 
-Esse projeto Pages **não está conectado ao Git** — push para o GitHub (`origin/main`) não dispara deploy automático. O deploy é manual via Wrangler.
+Esse projeto Pages **está conectado ao Git** (repositório `alphalog`, branch de produção `main`). Push para `origin/main` dispara deploy automático no Cloudflare Pages — não é preciso rodar Wrangler manualmente. Configuração de build no Cloudflare: comando `npm run build`, diretório de saída `dist`.
 
-Sempre que alterações forem commitadas/enviadas para o repositório git deste projeto, mantenha o `alphalog.pages.dev` sincronizado:
+Sempre que alterações forem commitadas neste projeto, envie (`git push`) para `origin/main` para manter o `alphalog.pages.dev` sincronizado. Depois do push, é possível acompanhar o andamento do deploy na aba "Deployments" do projeto no dashboard do Cloudflare Pages.
 
-1. `npm run build` (gera `dist/` com os assets atuais)
-2. `npx wrangler pages deploy dist --project-name=alphalog`
-3. Validar que o deploy pegou as mudanças (ex.: comparar hash de um arquivo alterado entre `dist/` local e a versão publicada) antes de reportar como concluído.
-
-Não pedir confirmação antes de rodar esse deploy — está pré-autorizado pelo usuário, desde que as mudanças já estejam commitadas no git.
+Não pedir confirmação antes de dar push para `main` — está pré-autorizado pelo usuário, desde que as mudanças já estejam commitadas no git.
