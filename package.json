@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:repdrive": "node scripts/build-repdrive.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
