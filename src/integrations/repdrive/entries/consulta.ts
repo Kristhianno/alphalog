@@ -3,6 +3,7 @@ import { runTool } from "../core/dispatcher"
 import type { ToolArgs } from "../core/types"
 import { alphaLogConnector } from "../connectors/alphalog/tools"
 import { PERSONAS, type PersonaId } from "../demo/personas"
+import { answerWithoutAI } from "../demo/ruleAgent"
 
 /**
  * Lógica do nó "Consultar dados" (chamado pelas ferramentas do agente no n8n). O actor sai da
@@ -21,3 +22,9 @@ export const toolDefs = alphaLogConnector.tools.map(({ name, description, roles,
   roles,
   params,
 }))
+
+/** Modo sem IA: responde a pergunta do lead com regras + as mesmas ferramentas. */
+export function responderSemIA(persona: string, texto: string): string {
+  if (!PERSONAS[persona as PersonaId]) return "Perfil de acesso não identificado."
+  return answerWithoutAI(persona as PersonaId, texto, consultar)
+}

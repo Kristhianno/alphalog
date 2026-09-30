@@ -10,8 +10,10 @@ const outDir = path.join(root, "n8n")
 /** Grupos de demonstração e override da URL da Evolution — editáveis também direto no nó Roteador. */
 const DEMO_GROUP_JIDS = (process.env.REPDRIVE_GROUP_JIDS ?? "120363412777463012@g.us").split(",").map((s) => s.trim()).filter(Boolean)
 const EVOLUTION_URL = process.env.REPDRIVE_EVOLUTION_URL ?? ""
-// openai (padrão, usa a credencial "OpenAI account" já existente) ou anthropic (claude-haiku-4-5-20251001)
-const PROVIDER = process.env.REPDRIVE_PROVIDER ?? "openai"
+// REPDRIVE_USE_AI=1 liga o agente de IA; sem isso a demo responde por regras com os dados do AlphaLog
+const USE_AI = process.env.REPDRIVE_USE_AI === "1"
+// anthropic (padrão, claude-haiku-4-5-20251001 — conectar a credencial depois) ou openai ("OpenAI account")
+const PROVIDER = process.env.REPDRIVE_PROVIDER ?? "anthropic"
 const MODEL = process.env.REPDRIVE_MODEL ?? (PROVIDER === "anthropic" ? "claude-haiku-4-5-20251001" : "gpt-4o-mini")
 const OPENAI_CREDENTIAL_ID = process.env.REPDRIVE_OPENAI_CREDENTIAL_ID ?? "quyUfoekmfCT3E4Y"
 // Redis guarda a sessão de cada lead (uma chave por lead) e a memória da conversa
@@ -163,15 +165,26 @@ const agent = node(
     text: "={{ $json.chatInput }}",
     options: { systemMessage: "={{ $json.systemPrompt }}", maxIterations: 6 },
   },
-  { onError: "continueRegularOutput" },
+  { onError: "continueRegularOutput", ...(USE_AI ? {} : { disabled: true }) },
 )
+
+const semIaCode = `${consultaJs}
+
+const r = $("Roteador").first().json;
+return [{ json: { output: Repdrive.responderSemIA(r.persona, r.chatInput) } }];`
+
+const semIa = node("Responder com dados AlphaLog", "n8n-nodes-base.code", 2, [1060, 300], { jsCode: semIaCode })
 
 const model =
   PROVIDER === "anthropic"
-    ? node("Modelo IA", "@n8n/n8n-nodes-langchain.lmChatAnthropic", 1.3, [960, 440], {
-        model: { __rl: true, mode: "id", value: MODEL },
-        options: { maxTokensToSample: 1024, temperature: 0.2 },
-      })
+    ? node(
+        "Claude (Anthropic)",
+        "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+        1.3,
+        [960, 440],
+        { model: { __rl: true, mode: "id", value: MODEL }, options: { maxTokensToSample: 1024, temperature: 0.2 } },
+        USE_AI ? {} : { disabled: true },
+      )
     : node(
         "Modelo IA",
         "@n8n/n8n-nodes-langchain.lmChatOpenAi",
@@ -259,7 +272,7 @@ const sticky = node("Leia-me", "n8n-nodes-base.stickyNote", 1, [-40, -120], {
   height: 380,
   content: [
     "## Repdrive — demo no grupo do WhatsApp",
-    "1. O nó **Modelo IA** usa a credencial OpenAI (troque para Claude com REPDRIVE_PROVIDER=anthropic no build).",
+    "1. Hoje as respostas saem de **Responder com dados AlphaLog** (regras, sem custo de IA). Para ligar a IA: crie a credencial Anthropic, selecione-a no nó **Claude (Anthropic)**, reative ele e o **Agente Repdrive** e ligue a saída *true* de **Precisa da IA?** ao agente (ou gere com REPDRIVE_USE_AI=1).",
     "2. Publique o workflow e copie a *Production URL* do nó **Webhook Evolution**.",
     "3. Na Evolution (instância), configure o Webhook com essa URL e o evento **MESSAGES_UPSERT**.",
     "4. O grupo Repdrive já vem configurado em `DEMO_GROUP_JIDS` (nó **Roteador**). Outros grupos: `/repdrive-ativar`.",
@@ -269,7 +282,7 @@ const sticky = node("Leia-me", "n8n-nodes-base.stickyNote", 1, [-40, -120], {
   ].join("\n"),
 })
 
-const nodes = [sticky, webhook, chave, lerSessao, roteador, gravarSessao, ifAgent, agent, model, memory, ...tools, montar, enviar, trigger, consulta]
+const nodes = [sticky, webhook, chave, lerSessao, roteador, gravarSessao, ifAgent, semIa, agent, model, memory, ...tools, montar, enviar, trigger, consulta]
 
 const connections = {
   [webhook.name]: { main: [[{ node: chave.name, type: "main", index: 0 }]] },
@@ -286,11 +299,12 @@ const connections = {
   },
   [ifAgent.name]: {
     main: [
-      [{ node: agent.name, type: "main", index: 0 }],
+      [{ node: USE_AI ? agent.name : semIa.name, type: "main", index: 0 }],
       [{ node: enviar.name, type: "main", index: 0 }],
     ],
   },
   [agent.name]: { main: [[{ node: montar.name, type: "main", index: 0 }]] },
+  [semIa.name]: { main: [[{ node: montar.name, type: "main", index: 0 }]] },
   [montar.name]: { main: [[{ node: enviar.name, type: "main", index: 0 }]] },
   [model.name]: { ai_languageModel: [[{ node: agent.name, type: "ai_languageModel", index: 0 }]] },
   [memory.name]: { ai_memory: [[{ node: agent.name, type: "ai_memory", index: 0 }]] },
@@ -310,6 +324,6 @@ const workflow = {
 await mkdir(outDir, { recursive: true })
 await writeFile(path.join(outDir, "repdrive.workflow.json"), `${JSON.stringify(workflow, null, 2)}\n`)
 console.log(
-  `n8n/repdrive.workflow.json gerado — ${toolDefs.length} ferramentas, bundles ${(entradaJs.length / 1024).toFixed(0)} KB + ${(consultaJs.length / 1024).toFixed(0)} KB, modelo ${MODEL}` +
+  `n8n/repdrive.workflow.json gerado — ${USE_AI ? "IA ligada" : "modo sem IA"}, ${toolDefs.length} ferramentas, bundles ${(entradaJs.length / 1024).toFixed(0)} KB + ${(consultaJs.length / 1024).toFixed(0)} KB, modelo ${MODEL}` +
     (DEMO_GROUP_JIDS.length ? `, grupos: ${DEMO_GROUP_JIDS.join(", ")}` : ", ative o grupo com /repdrive-ativar"),
 )

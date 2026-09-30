@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { consultar } from "../entries/consulta"
+import { consultar, responderSemIA } from "../entries/consulta"
 import { handleWebhook, type EntradaState } from "../entries/entrada"
 import { finalizeReply, routeDemoMessage, SESSION_TIMEOUT_MS } from "../demo/router"
 
@@ -56,6 +56,27 @@ describe("Repdrive — escopo das ferramentas por persona", () => {
 
   it("trata parâmetros vazios do modelo como ausentes", () => {
     expect(consultar("cliente", "minhas_solicitacoes", { escopo: "" })).toContain("#1014")
+  })
+})
+
+describe("Repdrive — modo sem IA (regras + dados do AlphaLog)", () => {
+  it("gestor: operação, frete, número de solicitação e várias perguntas numa mensagem", () => {
+    const multi = responderSemIA("gestor", "como está a operação agora? e quanto faturamos no mês?")
+    expect(multi).toContain("Panorama da operação")
+    expect(multi).toContain("Faturamento nos últimos 30 dias")
+    expect(responderSemIA("gestor", "quanto cobramos da Mendes num utilitário?")).toContain("Mendes Distribuidora")
+    expect(responderSemIA("gestor", "status da 1012")).toContain("#1012")
+  })
+
+  it("motorista e cliente respeitam o escopo da persona", () => {
+    expect(responderSemIA("motorista", "minha cnh está em dia?")).toContain("CNH")
+    expect(responderSemIA("motorista", "o que levo na 1008?")).toContain("Não encontrei")
+    expect(responderSemIA("cliente", "quando chega a carga 1014?")).toContain("Solicitação #1014")
+    expect(responderSemIA("cliente", "e a 1013?")).toContain("Não encontrei")
+  })
+
+  it("pergunta desconhecida mostra exemplos do perfil", () => {
+    expect(responderSemIA("cliente", "qual a capital da França?")).toContain("Experimente")
   })
 })
 
