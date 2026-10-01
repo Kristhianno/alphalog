@@ -257,7 +257,8 @@ function routeInChat(
   replyHere: (reply: string) => EntradaOutput,
 ): EntradaOutput[] {
   if (!text) {
-    return session?.persona ? [replyHere("Não consegui entender essa mensagem 🎧. Pode mandar o áudio de novo ou digitar a pergunta?")] : []
+    // o menu convida a mandar áudio: se a transcrição falhar, avisa mesmo antes de escolher o perfil
+    return session ? [replyHere("Não consegui entender essa mensagem 🎧. Pode mandar o áudio de novo ou digitar a pergunta?")] : []
   }
 
   const route = routeDemoMessage({

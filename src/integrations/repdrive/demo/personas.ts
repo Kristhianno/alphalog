@@ -12,6 +12,8 @@ export type PersonaId = "gestor" | "motorista" | "cliente"
 export interface Persona {
   id: PersonaId
   option: string
+  /** nomes aceitos no menu além do número (normalizados: sem acento, minúsculos) */
+  aliases: string[]
   /** quem o lead "vira" na demo — fixo aqui, nunca escolhido pelo modelo */
   actor: RepdriveActor
   who: string
@@ -24,6 +26,7 @@ export const PERSONAS: Record<PersonaId, Persona> = {
   gestor: {
     id: "gestor",
     option: "1",
+    aliases: ["gestor", "gestora", "gerente", "gestao"],
     actor: { companyId: DEMO_COMPANY_ID, userId: SEED_USER_IDS.gestor, role: "gestor" },
     who: "Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes",
     tools: ["painel_gestao", "consulta_gestao", "tabela_frete"],
@@ -42,6 +45,7 @@ export const PERSONAS: Record<PersonaId, Persona> = {
   motorista: {
     id: "motorista",
     option: "2",
+    aliases: ["motorista", "caminhoneiro", "caminhoneira"],
     actor: {
       companyId: DEMO_COMPANY_ID,
       userId: SEED_USER_IDS.motoristaJoao,
@@ -63,6 +67,7 @@ export const PERSONAS: Record<PersonaId, Persona> = {
   cliente: {
     id: "cliente",
     option: "3",
+    aliases: ["cliente"],
     actor: {
       companyId: DEMO_COMPANY_ID,
       userId: SEED_USER_IDS.clienteRoberto,
@@ -119,6 +124,8 @@ export function menuText(name?: string): string {
   return [
     `👋 Olá${first ? `, ${first}` : ""}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,
     "",
+    "🎙️ Pode falar comigo por *texto ou áudio*, como preferir — eu entendo os dois.",
+    "",
     "Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):",
     "",
     "*1* 👔 *Gestor* — operação, dados, custos e fretes",
@@ -126,12 +133,18 @@ export function menuText(name?: string): string {
     "*3* 📦 *Cliente* — status, coleta e entrega da carga",
     "*4* 🔄 Voltar a este menu (a qualquer momento)",
     "",
-    "Responda só com o número.",
+    "Responda com o número ou o nome do perfil (ex.: *1* ou *Gestor*).",
   ].join("\n")
 }
 
+/**
+ * Perfil escolhido no menu: aceita o número, o nome ("gestor") ou os dois ("1 gestor").
+ * Recebe o texto já normalizado (sem acento, minúsculo, sem pontuação).
+ */
 export function personaByOption(option: string): Persona | undefined {
-  return Object.values(PERSONAS).find((p) => p.option === option)
+  return Object.values(PERSONAS).find((p) =>
+    [p.option, ...p.aliases].some((a) => option === a || option === `${p.option} ${a}` || option === `${a} ${p.option}`),
+  )
 }
 
 export function systemPrompt(persona: Persona, now = new Date()): string {

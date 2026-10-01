@@ -101,6 +101,37 @@ describe("Repdrive — menu da demo", () => {
     expect(back.session.epoch).toBeGreaterThan(s1.epoch)
   })
 
+  it("menu avisa que aceita áudio e o perfil pelo nome", () => {
+    const r = routeDemoMessage({ ...base, session: undefined, text: "oi", now: 0 })
+    expect(r.kind === "send" && r.text).toContain("texto ou áudio")
+    expect(r.kind === "send" && r.text).toContain("nome do perfil")
+  })
+
+  it("perfil também é escolhido pelo nome, por extenso ou falado", () => {
+    const cases: Array<[string, string]> = [
+      ["Gestor", "gestor"],
+      ["gestor.", "gestor"],
+      ["👔 Gestor", "gestor"],
+      ["1 - Gestor", "gestor"],
+      ["Quero ser o gestor", "gestor"],
+      ["Gestão", "gestor"],
+      ["MOTORISTA", "motorista"],
+      ["sou motorista!", "motorista"],
+      ["perfil cliente", "cliente"],
+      ["Opção três.", "cliente"],
+    ]
+    for (const [text, persona] of cases) {
+      expect(routeDemoMessage({ ...base, session: undefined, text, now: 0 }).session.persona, text).toBe(persona)
+    }
+  })
+
+  it("frase com o nome do perfil no meio segue para o agente, sem trocar de perfil", () => {
+    const s = { persona: "gestor" as const, epoch: 1, last: 0 }
+    const r = routeDemoMessage({ ...base, session: s, text: "qual motorista está com a carga 1007?", now: 1000 })
+    expect(r.kind).toBe("agent")
+    expect(r.session.persona).toBe("gestor")
+  })
+
   it("expira após 30 minutos parado", () => {
     const s = { persona: "cliente" as const, epoch: 1, last: 0 }
     const r = routeDemoMessage({ ...base, session: s, text: "e a carga?", now: SESSION_TIMEOUT_MS + 1 })

@@ -30,9 +30,17 @@ export type DemoRoute =
 // opções faladas em áudio ("um", "opção dois", "o três") viram o número do menu
 const SPOKEN_OPTIONS: Record<string, string> = { um: "1", uma: "1", dois: "2", duas: "2", tres: "3", quatro: "4" }
 
+// "quero ser gestor", "sou motorista", "perfil cliente", "opção 2"… → só o que interessa
+const FILLER = /^(quero ser|quero|sou|perfil de|perfil|modo|opcao|numero|escolho|vou de|o|a)\s+/
+
 export function normalizeCommand(s: string): string {
-  const t = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[.!*,]+$/, "")
-  return SPOKEN_OPTIONS[t.replace(/^(opcao|numero|o|a)\s+/, "")] ?? t
+  let t = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9/\s]+/g, " ") // emojis, pontuação e "1 - gestor"
+    .replace(/\s+/g, " ")
+    .trim()
+  while (FILLER.test(t)) t = t.replace(FILLER, "")
+  return SPOKEN_OPTIONS[t] ?? t
 }
 
 /**
