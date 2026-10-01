@@ -116,65 +116,135 @@ describe("Repdrive — menu da demo", () => {
   })
 })
 
-describe("Repdrive — webhook da Evolution", () => {
-  it("ignora mensagens próprias, privadas, de outros grupos e duplicadas", () => {
+describe("Repdrive — grupo de demonstração → privado", () => {
+  const lid = (phone: string) => `${phone.slice(-6)}0000@lid`
+  const groupMsg = (text: string, phone: string, opts: { jid?: string; id?: string; fromMe?: boolean } = {}) => ({
+    event: "messages.upsert",
+    instance: "alphadata",
+    server_url: "https://evo.example.com/",
+    apikey: "KEY",
+    data: {
+      key: {
+        remoteJid: opts.jid ?? GROUP,
+        fromMe: opts.fromMe ?? false,
+        id: opts.id ?? `G${msgId++}`,
+        participant: lid(phone),
+        participantAlt: `${phone}@s.whatsapp.net`,
+      },
+      pushName: "Maria Lead",
+      message: { conversation: text },
+    },
+  })
+  const privateMsg = (text: string, phone: string) => ({
+    event: "messages.upsert",
+    instance: "alphadata",
+    server_url: "https://evo.example.com/",
+    apikey: "KEY",
+    data: {
+      key: { remoteJid: `${phone}@s.whatsapp.net`, fromMe: false, id: `P${msgId++}` },
+      pushName: "Maria Lead",
+      message: { conversation: text },
+    },
+  })
+  const t0 = 1_000_000
+
+  it("mensagem no grupo responde no grupo e manda o menu no privado do lead", () => {
     const state: EntradaState = {}
-    expect(handleWebhook(webhook("oi", { fromMe: true }), state, config)).toBeNull()
-    expect(handleWebhook(webhook("oi", { jid: "5541@s.whatsapp.net" }), state, config)).toBeNull()
-    expect(handleWebhook(webhook("oi", { jid: "999@g.us" }), state, config)).toBeNull()
-    expect(handleWebhook(webhook("oi", { id: "DUP" }), state, config)).not.toBeNull()
-    expect(handleWebhook(webhook("oi", { id: "DUP" }), state, config)).toBeNull()
+    const out = handleWebhook(groupMsg("oi", "5541911110001"), state, config, t0)
+    expect(out).toHaveLength(2)
+    expect(out[0].send.body.number).toBe(GROUP)
+    expect(out[0].send.body.text).toContain("Te chamei no privado")
+    expect(out[0].send.body.quoted?.key.participant).toBe(lid("5541911110001"))
+    expect(out[0].send.url).toBe("https://evo.example.com/message/sendText/alphadata")
+    expect(out[1].send.body.number).toBe("5541911110001")
+    expect(out[1].send.body.text).toContain("Escolha um perfil")
+    expect(out[1].send.body.quoted).toBeUndefined()
   })
 
-  it("responde citando a mensagem do lead, pela URL da instância", () => {
-    const out = handleWebhook(webhook("oi"), {}, config)
-    expect(out?.send.url).toBe("https://evo.example.com/message/sendText/alphadata")
-    expect(out?.send.body.number).toBe(GROUP)
-    expect(out?.send.body.quoted?.key.participant).toBe("5541900000001@s.whatsapp.net")
+  it("no privado, só atende quem começou pelo grupo", () => {
+    const state: EntradaState = {}
+    expect(handleWebhook(privateMsg("oi", "5541911110002"), state, config, t0)).toEqual([])
+    handleWebhook(groupMsg("oi", "5541911110002"), state, config, t0)
+    const escolha = handleWebhook(privateMsg("2", "5541911110002"), state, config, t0 + 1000)
+    expect(escolha[0].send.body.number).toBe("5541911110002@s.whatsapp.net")
+    expect(escolha[0].send.body.text).toContain("Modo Motorista")
+    const pergunta = handleWebhook(privateMsg("minhas corridas de hoje", "5541911110002"), state, config, t0 + 2000)
+    expect(pergunta[0].action).toBe("agent")
   })
 
-  it("mantém uma sessão por participante do grupo", () => {
+  it("lead que já está no privado não é reiniciado ao escrever no grupo", () => {
     const state: EntradaState = {}
-    handleWebhook(webhook("1", { from: "a@s.whatsapp.net" }), state, config)
-    handleWebhook(webhook("3", { from: "b@s.whatsapp.net" }), state, config)
-    const a = handleWebhook(webhook("como está a operação?", { from: "a@s.whatsapp.net" }), state, config)
-    const b = handleWebhook(webhook("cadê minha carga?", { from: "b@s.whatsapp.net" }), state, config)
-    expect(a?.action === "agent" && a.persona).toBe("gestor")
-    expect(b?.action === "agent" && b.persona).toBe("cliente")
+    handleWebhook(groupMsg("oi", "5541911110003"), state, config, t0)
+    handleWebhook(privateMsg("1", "5541911110003"), state, config, t0 + 1000)
+    const out = handleWebhook(groupMsg("e aí?", "5541911110003"), state, config, t0 + 2000)
+    expect(out).toHaveLength(1)
+    expect(out[0].send.body.text).toContain("já está rolando no privado")
+    expect(state.sessions?.["pessoa:5541911110003@s.whatsapp.net"]?.persona).toBe("gestor")
+  })
+
+  it("cada lead no perfil Cliente vira um cliente fictício diferente, com escopo próprio", () => {
+    const state: EntradaState = {}
+    const ids: string[] = []
+    for (const phone of ["5541911110004", "5541911110005"]) {
+      handleWebhook(groupMsg("oi", phone), state, config, t0)
+      handleWebhook(privateMsg("3", phone), state, config, t0 + 1000)
+      const ask = handleWebhook(privateMsg("minhas cargas", phone), state, config, t0 + 2000)[0]
+      expect(ask.action).toBe("agent")
+      if (ask.action === "agent") ids.push(ask.clientId)
+    }
+    expect(ids[0]).not.toBe(ids[1])
+    expect(consultar("cliente", "minhas_solicitacoes", { escopo: "todas" }, ids[0])).not.toBe(
+      consultar("cliente", "minhas_solicitacoes", { escopo: "todas" }, ids[1]),
+    )
+  })
+
+  it("encerra por inatividade ou por 'encerrar' e devolve o privado ao atendimento humano", () => {
+    const state: EntradaState = {}
+    handleWebhook(groupMsg("oi", "5541911110006"), state, config, t0)
+    handleWebhook(privateMsg("1", "5541911110006"), state, config, t0 + 1000)
+    const expirou = handleWebhook(privateMsg("e o faturamento?", "5541911110006"), state, config, t0 + SESSION_TIMEOUT_MS + 5000)
+    expect(expirou[0].send.body.text).toContain("encerrada por inatividade")
+    expect(handleWebhook(privateMsg("oi", "5541911110006"), state, config, t0 + SESSION_TIMEOUT_MS + 6000)).toEqual([])
+
+    handleWebhook(groupMsg("oi de novo", "5541911110006"), state, config, t0 + SESSION_TIMEOUT_MS + 7000)
+    const fim = handleWebhook(privateMsg("encerrar", "5541911110006"), state, config, t0 + SESSION_TIMEOUT_MS + 8000)
+    expect(fim[0].send.body.text).toContain("Demonstração encerrada")
+    expect(handleWebhook(privateMsg("1", "5541911110006"), state, config, t0 + SESSION_TIMEOUT_MS + 9000)).toEqual([])
+  })
+
+  it("ignora mensagens próprias, de outros grupos e duplicadas", () => {
+    const state: EntradaState = {}
+    expect(handleWebhook(groupMsg("oi", "5541911110007", { fromMe: true }), state, config, t0)).toEqual([])
+    expect(handleWebhook(groupMsg("oi", "5541911110007", { jid: "999@g.us" }), state, config, t0)).toEqual([])
+    expect(handleWebhook(groupMsg("oi", "5541911110007", { id: "DUP" }), state, config, t0)).toHaveLength(2)
+    expect(handleWebhook(groupMsg("oi", "5541911110007", { id: "DUP" }), state, config, t0)).toEqual([])
   })
 
   it("/repdrive-ativar liga a demo num grupo sem configuração", () => {
     const state: EntradaState = {}
     const empty = { demoGroupJids: [] }
-    expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)).toBeNull()
-    expect(handleWebhook(webhook("/repdrive-ativar", { jid: "novo@g.us" }), state, empty)?.send.body.text).toContain("ativada")
-    expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)?.action).toBe("send")
+    expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)).toEqual([])
+    expect(handleWebhook(webhook("/repdrive-ativar", { jid: "novo@g.us" }), state, empty)[0].send.body.text).toContain("ativada")
+    expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)).toHaveLength(2)
     handleWebhook(webhook("/repdrive-desativar", { jid: "novo@g.us" }), state, empty)
-    expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)).toBeNull()
-  })
-})
-
-describe("Repdrive — áudio", () => {
-  const audioBody = (base64?: string) => ({
-    event: "messages.upsert",
-    instance: "alphadata",
-    data: {
-      key: { remoteJid: GROUP, fromMe: false, id: `AUD${msgId++}`, participant: "5541900000009@s.whatsapp.net" },
-      message: { audioMessage: { mimetype: "audio/ogg; codecs=opus", seconds: 3 }, ...(base64 ? { base64 } : {}) },
-    },
+    expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)).toEqual([])
   })
 
-  it("detecta áudio e normaliza o mimetype", () => {
-    expect(audioOf(audioBody("QUJD"))).toMatchObject({ mimetype: "audio/ogg", base64: "QUJD", seconds: 3 })
-    expect(audioOf(audioBody())?.base64).toBeUndefined()
-    expect(audioOf(webhook("oi"))).toBeNull()
-  })
-
-  it("a transcrição segue o fluxo como texto, inclusive opções faladas do menu", () => {
+  it("áudio transcrito segue o fluxo como texto, inclusive opções faladas do menu", () => {
     const state: EntradaState = {}
-    const escolha = handleWebhook(withTranscription(audioBody(), "Três."), state, config)
-    expect(escolha?.send.body.text).toContain("Modo Cliente ativado")
-    const pergunta = handleWebhook(withTranscription(audioBody(), "Quando chega a minha carga 1014?"), state, config)
-    expect(pergunta?.action === "agent" && pergunta.chatInput).toBe("Quando chega a minha carga 1014?")
+    handleWebhook(groupMsg("oi", "5541911110008"), state, config, t0)
+    const audio = (phone: string) => ({
+      event: "messages.upsert",
+      instance: "alphadata",
+      data: {
+        key: { remoteJid: `${phone}@s.whatsapp.net`, fromMe: false, id: `A${msgId++}` },
+        message: { audioMessage: { mimetype: "audio/ogg; codecs=opus", seconds: 3 }, base64: "QUJD" },
+      },
+    })
+    expect(audioOf(audio("5541911110008"))).toMatchObject({ mimetype: "audio/ogg", base64: "QUJD" })
+    const escolha = handleWebhook(withTranscription(audio("5541911110008"), "Três."), state, config, t0 + 1000)
+    expect(escolha[0].send.body.text).toContain("Modo Cliente ativado")
+    const pergunta = handleWebhook(withTranscription(audio("5541911110008"), "Quando chega minha carga?"), state, config, t0 + 2000)
+    expect(pergunta[0].action === "agent" && pergunta[0].chatInput).toBe("Quando chega minha carga?")
   })
 })

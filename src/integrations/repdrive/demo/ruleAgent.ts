@@ -29,7 +29,7 @@ const HELP: Record<PersonaId, string> = {
   motorista:
     "Posso te ajudar com suas corridas. Experimente:\n• _Quais são minhas entregas de hoje?_\n• _O que eu levo na carga 1007?_\n• _Minha CNH e meu veículo estão em dia?_\n• _Quantas entregas fiz no mês?_",
   cliente:
-    "Posso te ajudar a acompanhar suas cargas. Experimente:\n• _Quais cargas minhas estão em andamento?_\n• _Quando chega a carga 1014?_\n• _A carga 1002 já tem data de coleta?_\n• _Quais cargas já foram entregues?_",
+    "Posso te ajudar a acompanhar suas cargas. Experimente:\n• _Quais cargas minhas estão em andamento?_\n• _Quando chega a carga <número>?_\n• _Quais cargas já foram entregues?_",
 }
 
 const NOT_UNDERSTOOD = "Não entendi bem essa pergunta. 🤔"

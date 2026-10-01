@@ -66,29 +66,30 @@ ${entradaJs}
 // A sessão do lead vem do Redis (nó anterior); só dedupe e grupos ativados ficam no static data.
 // o nó do Redis devolve só { session }; mensagem e chave vêm do nó "Chave da sessão"
 const src = $("Injetar transcrição").isExecuted ? $("Injetar transcrição").first().json : $("Chave da sessão").first().json;
-const inp = { ...src, session: $input.first().json.session };
+const inp = { ...src, session: $("Ler sessão (Redis)").first().json.session };
 const state = $getWorkflowStaticData("global");
-const work = { seen: state.seen, demoGroups: state.demoGroups, sessions: {} };
+const work = { seen: state.seen, demoGroups: state.demoGroups, clientSeq: state.clientSeq, sessions: {} };
 if (inp.session) {
   try {
     work.sessions[inp.sessionKey] = typeof inp.session === "string" ? JSON.parse(inp.session) : inp.session;
   } catch (e) {}
 }
-const out = Repdrive.handleWebhook(inp.body ?? {}, work, {
+const outs = Repdrive.handleWebhook(inp.body ?? {}, work, {
   demoGroupJids: DEMO_GROUP_JIDS,
   evolutionUrl: EVOLUTION_URL,
   evolutionApiKey: EVOLUTION_APIKEY,
 });
 state.seen = work.seen;
 state.demoGroups = work.demoGroups;
-if (!out) return [];
+state.clientSeq = work.clientSeq;
 const session = work.sessions[inp.sessionKey];
-return [{ json: { ...out, sessionKey: inp.sessionKey, sessionJson: session ? JSON.stringify(session) : "" } }];`
+const sessionJson = session ? JSON.stringify(session) : "";
+return outs.map((out) => ({ json: { ...out, sessionKey: inp.sessionKey, sessionJson } }));`
 
 const chaveCode = `${entradaJs}
 
 const body = $input.first().json.body ?? {};
-return [{ json: { body, sessionKey: Repdrive.sessionKeyOf(body) ?? "sem-chave", audio: Repdrive.audioOf(body) } }];`
+return [{ json: { body, sessionKey: Repdrive.sessionKeyOf(body) ?? "sem-chave", audio: Repdrive.audioOf(body), privado: Repdrive.isPrivate(body) } }];`
 
 const prepararAudioCode = `const c = $("Chave da sessão").first().json;
 const baixado = $input.first().json;
@@ -118,7 +119,7 @@ const args = {};
 for (const k of ${JSON.stringify([...new Set(toolDefs.flatMap((t) => t.params.map((p) => p.name)))])}) {
   if (i[k] !== undefined && i[k] !== null && i[k] !== "") args[k] = i[k];
 }
-return [{ json: { resposta: Repdrive.consultar(i.persona, i.ferramenta, args) } }];`
+return [{ json: { resposta: Repdrive.consultar(i.persona, i.ferramenta, args, i.clientId) } }];`
 
 const allParams = [...new Map(toolDefs.flatMap((t) => t.params).map((p) => [p.name, p])).values()]
 
@@ -131,11 +132,11 @@ webhook.webhookId = "repdrive-evolution"
 
 const chave = node("Chave da sessão", "n8n-nodes-base.code", 2, [200, 300], { jsCode: chaveCode })
 
-const ehAudio = node("É áudio?", "n8n-nodes-base.if", 2.3, [400, 300], {
+const ehAudio = node("É áudio?", "n8n-nodes-base.if", 2.3, [600, 300], {
   conditions: {
     options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 3 },
     conditions: [
-      { id: "cond-audio", leftValue: "={{ !!$json.audio }}", rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
+      { id: "cond-audio", leftValue: '={{ !!$("Chave da sessão").first().json.audio && (!$("Chave da sessão").first().json.privado || !!$json.session) }}', rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
     ],
     combinator: "and",
   },
@@ -143,11 +144,11 @@ const ehAudio = node("É áudio?", "n8n-nodes-base.if", 2.3, [400, 300], {
   options: {},
 })
 
-const temAudio = node("Áudio veio no webhook?", "n8n-nodes-base.if", 2.3, [600, 560], {
+const temAudio = node("Áudio veio no webhook?", "n8n-nodes-base.if", 2.3, [800, 560], {
   conditions: {
     options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 3 },
     conditions: [
-      { id: "cond-b64", leftValue: "={{ !!$json.audio.base64 }}", rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
+      { id: "cond-b64", leftValue: '={{ !!$("Chave da sessão").first().json.audio.base64 }}', rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
     ],
     combinator: "and",
   },
@@ -159,27 +160,27 @@ const baixarAudio = node(
   "Baixar áudio (Evolution)",
   "n8n-nodes-base.httpRequest",
   4.4,
-  [800, 680],
+  [1000, 680],
   {
     method: "POST",
-    url: '={{ String($json.body.server_url || "").replace(/\\/+$/, "") + "/chat/getBase64FromMediaMessage/" + $json.body.instance }}',
+    url: '={{ String($("Chave da sessão").first().json.body.server_url || "").replace(/\\/+$/, "") + "/chat/getBase64FromMediaMessage/" + $("Chave da sessão").first().json.body.instance }}',
     sendHeaders: true,
-    headerParameters: { parameters: [{ name: "apikey", value: "={{ $json.body.apikey }}" }] },
+    headerParameters: { parameters: [{ name: "apikey", value: '={{ $("Chave da sessão").first().json.body.apikey }}' }] },
     sendBody: true,
     specifyBody: "json",
-    jsonBody: "={{ JSON.stringify({ message: { key: { id: $json.audio.messageId } }, convertToMp4: false }) }}",
+    jsonBody: '={{ JSON.stringify({ message: { key: { id: $("Chave da sessão").first().json.audio.messageId } }, convertToMp4: false }) }}',
     options: { timeout: 20000 },
   },
   { onError: "continueRegularOutput" },
 )
 
-const prepararAudio = node("Preparar áudio", "n8n-nodes-base.code", 2, [1000, 560], { jsCode: prepararAudioCode })
+const prepararAudio = node("Preparar áudio", "n8n-nodes-base.code", 2, [1200, 560], { jsCode: prepararAudioCode })
 
 const transcrever = node(
   "Transcrever (Groq Whisper)",
   "n8n-nodes-base.httpRequest",
   4.4,
-  [1200, 560],
+  [1400, 560],
   {
     method: "POST",
     url: "https://api.groq.com/openai/v1/audio/transcriptions",
@@ -200,13 +201,13 @@ const transcrever = node(
   { onError: "continueRegularOutput", credentials: { httpHeaderAuth: GROQ_CREDENTIAL } },
 )
 
-const injetar = node("Injetar transcrição", "n8n-nodes-base.code", 2, [1400, 560], { jsCode: injetarCode })
+const injetar = node("Injetar transcrição", "n8n-nodes-base.code", 2, [1600, 560], { jsCode: injetarCode })
 
 const lerSessao = node(
   "Ler sessão (Redis)",
   "n8n-nodes-base.redis",
   1,
-  [1600, 300],
+  [400, 300],
   { operation: "get", propertyName: "session", key: "=repdrive:sessao:{{ $json.sessionKey }}", keyType: "automatic", options: {} },
   { credentials: { redis: REDIS_CREDENTIAL } },
 )
@@ -264,7 +265,7 @@ const semIaCode = `${consultaJs}
 const ai = $input.first().json.output;
 if (typeof ai === "string" && ai.trim()) return [{ json: { output: ai } }];
 const r = $("Roteador").first().json;
-return [{ json: { output: Repdrive.responderSemIA(r.persona, r.chatInput) } }];`
+return [{ json: { output: Repdrive.responderSemIA(r.persona, r.chatInput, r.clientId) } }];`
 
 const semIa = node("Responder com dados AlphaLog", "n8n-nodes-base.code", 2, [2460, 160], { jsCode: semIaCode })
 
@@ -304,12 +305,13 @@ const memory = node(
 const tools = toolDefs.map((t, idx) => {
   const value = {
     persona: '={{ $("Roteador").first().json.persona }}',
+    clientId: '={{ $("Roteador").first().json.clientId }}',
     ferramenta: t.name,
   }
   for (const p of t.params) {
     value[p.name] = `={{ $fromAI(${JSON.stringify(p.name)}, ${JSON.stringify(p.description)}, "${p.type}") }}`
   }
-  const schemaFields = ["persona", "ferramenta", ...allParams.map((p) => p.name)]
+  const schemaFields = ["persona", "clientId", "ferramenta", ...allParams.map((p) => p.name)]
   return node(
     t.name,
     "@n8n/n8n-nodes-langchain.toolWorkflow",
@@ -354,7 +356,7 @@ const enviar = node("Enviar WhatsApp", "n8n-nodes-base.httpRequest", 4.4, [2880,
 
 const trigger = node("Ferramentas (chamadas pela IA)", "n8n-nodes-base.executeWorkflowTrigger", 1.1, [0, 900], {
   workflowInputs: {
-    values: ["persona", "ferramenta", ...allParams.map((p) => p.name)].map((name) => ({ name })),
+    values: ["persona", "clientId", "ferramenta", ...allParams.map((p) => p.name)].map((name) => ({ name })),
   },
 })
 
@@ -379,11 +381,12 @@ const nodes = [sticky, webhook, chave, ehAudio, temAudio, baixarAudio, prepararA
 
 const connections = {
   [webhook.name]: { main: [[{ node: chave.name, type: "main", index: 0 }]] },
-  [chave.name]: { main: [[{ node: ehAudio.name, type: "main", index: 0 }]] },
+  [chave.name]: { main: [[{ node: lerSessao.name, type: "main", index: 0 }]] },
+  [lerSessao.name]: { main: [[{ node: ehAudio.name, type: "main", index: 0 }]] },
   [ehAudio.name]: {
     main: [
       [{ node: temAudio.name, type: "main", index: 0 }],
-      [{ node: lerSessao.name, type: "main", index: 0 }],
+      [{ node: roteador.name, type: "main", index: 0 }],
     ],
   },
   [temAudio.name]: {
@@ -395,8 +398,7 @@ const connections = {
   [baixarAudio.name]: { main: [[{ node: prepararAudio.name, type: "main", index: 0 }]] },
   [prepararAudio.name]: { main: [[{ node: transcrever.name, type: "main", index: 0 }]] },
   [transcrever.name]: { main: [[{ node: injetar.name, type: "main", index: 0 }]] },
-  [injetar.name]: { main: [[{ node: lerSessao.name, type: "main", index: 0 }]] },
-  [lerSessao.name]: { main: [[{ node: roteador.name, type: "main", index: 0 }]] },
+  [injetar.name]: { main: [[{ node: roteador.name, type: "main", index: 0 }]] },
   [roteador.name]: {
     main: [
       [

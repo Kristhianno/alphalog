@@ -2,6 +2,7 @@ import { SEED_CLIENT_IDS } from "@/mocks/db/seed/clientes.seed"
 import { SEED_DRIVER_IDS } from "@/mocks/db/seed/motoristas.seed"
 import { SEED_USER_IDS } from "@/mocks/db/seed/usuarios.seed"
 import type { RepdriveActor } from "../core/types"
+import { clientExamples, demoClient } from "./clients"
 
 export const DEMO_COMPANY_ID = "alphalog-demo"
 export const DEMO_COMPANY_NAME = "AlphaLog Transportes"
@@ -82,6 +83,33 @@ export const PERSONAS: Record<PersonaId, Persona> = {
       "🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.",
     ].join("\n"),
   },
+}
+
+/**
+ * Persona efetiva da sessão. No perfil Cliente, cada lead recebe um cliente fictício próprio
+ * (sessão.clientId) — actor, apresentação e prompt passam a ser os daquele cliente.
+ */
+export function personaFor(id: PersonaId, clientId?: string): Persona {
+  const base = PERSONAS[id]
+  if (id !== "cliente") return base
+  const c = demoClient(clientId)
+  const ex = clientExamples(c.clientId)
+  return {
+    ...base,
+    actor: { ...base.actor, userId: `demo-contato-${c.clientId}`, clientId: c.clientId },
+    who: `${c.contact}, da empresa ${c.company}, cliente da AlphaLog Transportes`,
+    intro: [
+      "📦 *Modo Cliente ativado*",
+      `Agora você é ${c.contact === "Juliana" || c.contact === "Patrícia" || c.contact === "Simone" ? "a" : "o"} *${c.contact}*, da *${c.company}*, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,
+      "",
+      "• _Quais cargas minhas estão em andamento?_",
+      ex.own ? `• _Quando chega a carga ${ex.own}?_` : "• _Quando chega minha próxima carga?_",
+      ex.scheduled ? `• _A carga ${ex.scheduled} já tem data de coleta?_` : "• _Quais cargas já foram entregues?_",
+      ...(ex.other
+        ? ["", `🔒 Tente perguntar pela carga *${ex.other}* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`]
+        : []),
+    ].join("\n"),
+  }
 }
 
 export const MENU_FOOTER = "_Digite *4* para voltar ao menu_"

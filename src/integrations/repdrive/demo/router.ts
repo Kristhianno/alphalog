@@ -1,4 +1,4 @@
-import { MENU_FOOTER, PERSONAS, menuText, personaByOption, systemPrompt, type PersonaId } from "./personas"
+import { MENU_FOOTER, menuText, personaByOption, personaFor, systemPrompt, type PersonaId } from "./personas"
 
 export const SESSION_TIMEOUT_MS = 30 * 60_000
 const MENU_WORDS = ["4", "menu", "voltar", "inicio", "sair", "0"]
@@ -8,23 +8,37 @@ export interface DemoSession {
   /** muda a cada troca de perfil/menu — entra no id da memória do agente, que assim "zera" */
   epoch: number
   last: number
+  /** cliente fictício atribuído a este lead no perfil Cliente (fixo durante a sessão) */
+  clientId?: string
+  /** a conversa segue no privado do lead (iniciada pelo grupo) */
+  privado?: boolean
+  /** sessão encerrada (inatividade ou "encerrar") — o privado volta a ser só do atendimento humano */
+  ended?: boolean
 }
 
 export type DemoRoute =
   | { kind: "send"; text: string; session: DemoSession }
-  | { kind: "agent"; persona: PersonaId; memoryKey: string; systemPrompt: string; session: DemoSession }
+  | {
+      kind: "agent"
+      persona: PersonaId
+      clientId?: string
+      memoryKey: string
+      systemPrompt: string
+      session: DemoSession
+    }
 
 // opções faladas em áudio ("um", "opção dois", "o três") viram o número do menu
 const SPOKEN_OPTIONS: Record<string, string> = { um: "1", uma: "1", dois: "2", duas: "2", tres: "3", quatro: "4" }
 
-function normalize(s: string): string {
+export function normalizeCommand(s: string): string {
   const t = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[.!*,]+$/, "")
   return SPOKEN_OPTIONS[t.replace(/^(opcao|numero|o|a)\s+/, "")] ?? t
 }
 
 /**
  * Máquina de estados do menu da demo. Pura (sem I/O) para ser testável; quem chama guarda
- * a sessão devolvida. `sessionKey` identifica o lead dentro do grupo (grupo + participante).
+ * a sessão devolvida. `sessionKey` identifica o lead; `assignClient` sorteia o cliente
+ * fictício na primeira vez que o lead escolhe o perfil Cliente.
  */
 export function routeDemoMessage(params: {
   session: DemoSession | undefined
@@ -32,19 +46,22 @@ export function routeDemoMessage(params: {
   text: string
   now: number
   pushName?: string
+  assignClient?: () => string
 }): DemoRoute {
-  const prev = params.session ?? { persona: null, epoch: 0, last: 0 }
-  const t = normalize(params.text)
+  const prev: DemoSession = params.session ?? { persona: null, epoch: 0, last: 0 }
+  const t = normalizeCommand(params.text)
   const expired = prev.persona !== null && params.now - prev.last > SESSION_TIMEOUT_MS
   const chosen = personaByOption(t)
 
   if (chosen) {
-    const session = { persona: chosen.id, epoch: prev.epoch + 1, last: params.now }
-    return { kind: "send", text: `${chosen.intro}\n\n${MENU_FOOTER}`, session }
+    const clientId = chosen.id === "cliente" ? (prev.clientId ?? params.assignClient?.()) : prev.clientId
+    const persona = personaFor(chosen.id, clientId)
+    const session = { ...prev, persona: chosen.id, clientId, epoch: prev.epoch + 1, last: params.now }
+    return { kind: "send", text: `${persona.intro}\n\n${MENU_FOOTER}`, session }
   }
 
   if (prev.persona === null || expired || MENU_WORDS.includes(t)) {
-    const session = { persona: null, epoch: prev.persona === null ? prev.epoch : prev.epoch + 1, last: params.now }
+    const session = { ...prev, persona: null, epoch: prev.persona === null ? prev.epoch : prev.epoch + 1, last: params.now }
     const prefix = expired ? "⏱️ Sua sessão de teste expirou por inatividade.\n\n" : ""
     return { kind: "send", text: prefix + menuText(params.pushName), session }
   }
@@ -53,8 +70,9 @@ export function routeDemoMessage(params: {
   return {
     kind: "agent",
     persona: prev.persona,
+    clientId: prev.persona === "cliente" ? prev.clientId : undefined,
     memoryKey: `${params.sessionKey}#${prev.epoch}`,
-    systemPrompt: systemPrompt(PERSONAS[prev.persona], new Date(params.now)),
+    systemPrompt: systemPrompt(personaFor(prev.persona, prev.clientId), new Date(params.now)),
     session,
   }
 }
