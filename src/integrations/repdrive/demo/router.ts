@@ -14,8 +14,12 @@ export type DemoRoute =
   | { kind: "send"; text: string; session: DemoSession }
   | { kind: "agent"; persona: PersonaId; memoryKey: string; systemPrompt: string; session: DemoSession }
 
+// opções faladas em áudio ("um", "opção dois", "o três") viram o número do menu
+const SPOKEN_OPTIONS: Record<string, string> = { um: "1", uma: "1", dois: "2", duas: "2", tres: "3", quatro: "4" }
+
 function normalize(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim().replace(/[.!*]+$/, "")
+  const t = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[.!*,]+$/, "")
+  return SPOKEN_OPTIONS[t.replace(/^(opcao|numero|o|a)\s+/, "")] ?? t
 }
 
 /**

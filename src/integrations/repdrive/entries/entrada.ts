@@ -45,6 +45,9 @@ interface EvolutionMessage {
     extendedTextMessage?: { text?: string }
     imageMessage?: { caption?: string }
     videoMessage?: { caption?: string }
+    audioMessage?: { mimetype?: string; seconds?: number }
+    /** presente quando o webhook da Evolution está com webhookBase64 ligado */
+    base64?: string
   }
   messageType?: string
 }
@@ -59,6 +62,35 @@ function extractText(m: EvolutionMessage): string | undefined {
     m.message?.imageMessage?.caption ??
     m.message?.videoMessage?.caption
   )?.trim()
+}
+
+export interface AudioInfo {
+  messageId: string
+  mimetype: string
+  /** pode faltar — aí o workflow baixa pela Evolution (/chat/getBase64FromMediaMessage) */
+  base64?: string
+  seconds?: number
+}
+
+/** Mensagem de voz/áudio recebida? (o workflow transcreve antes do Roteador) */
+export function audioOf(body: Record<string, unknown>): AudioInfo | null {
+  const raw = body.data as EvolutionMessage | EvolutionMessage[] | undefined
+  const msg = Array.isArray(raw) ? raw[0] : raw
+  const audio = msg?.message?.audioMessage
+  if (!audio || !msg?.key?.id || msg.key.fromMe) return null
+  return {
+    messageId: msg.key.id,
+    mimetype: (audio.mimetype ?? "audio/ogg").split(";")[0].trim(),
+    base64: msg.message?.base64 || undefined,
+    seconds: audio.seconds,
+  }
+}
+
+/** Troca o áudio pelo texto transcrito, para o resto do fluxo tratar como mensagem de texto. */
+export function withTranscription(body: Record<string, unknown>, text: string): Record<string, unknown> {
+  const raw = body.data as EvolutionMessage | EvolutionMessage[]
+  const msg = Array.isArray(raw) ? raw[0] : raw
+  return { ...body, transcription: text, data: { ...msg, message: { conversation: text } } }
 }
 
 export function handleWebhook(
@@ -124,7 +156,7 @@ export function handleWebhook(
   if (!text) {
     const active = state.sessions[sessionKey]?.persona
     return active
-      ? { action: "send", send: send("Por enquanto eu respondo só mensagens de texto. Pode digitar sua pergunta? 🙂") }
+      ? { action: "send", send: send("Não consegui entender essa mensagem 🎧. Pode mandar o áudio de novo ou digitar a pergunta?") }
       : null
   }
 

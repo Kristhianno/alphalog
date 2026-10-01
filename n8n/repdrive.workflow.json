@@ -2,7 +2,7 @@
   "name": "RepDrive",
   "nodes": [
     {
-      "id": "repdrive-23",
+      "id": "repdrive-29",
       "name": "Leia-me",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -42,16 +42,194 @@
         300
       ],
       "parameters": {
-        "jsCode": "var Repdrive=(function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});let t=globalThis;if(typeof t.crypto?.randomUUID!=`function`){let e=0,n=()=>{e+=1;let t=(Date.now().toString(16)+e.toString(16).padStart(8,`0`)+Math.random().toString(16).slice(2)).padEnd(32,`0`);return`${t.slice(0,8)}-${t.slice(8,12)}-4${t.slice(13,16)}-a${t.slice(17,20)}-${t.slice(20,32)}`};try{t.crypto={...t.crypto??{},randomUUID:n}}catch{Object.defineProperty(globalThis,\"crypto\",{value:{randomUUID:n},configurable:!0})}}let n={admin:`user-admin`,gestor:`user-gestor`,assistente:`user-assistente`,motoristaJoao:`user-motorista-joao`,motoristaMarcia:`user-motorista-marcia`,clienteRoberto:`user-cliente-roberto`,clienteJuliana:`user-cliente-juliana`},r={mendes:`cliente-mendes`,construplus:`cliente-construplus`,boaVista:`cliente-boavista`,serraDourada:`cliente-serradourada`,monteVerde:`cliente-monteverde`,rioBonito:`cliente-riobonito`};r.mendes,n.clienteRoberto,r.construplus,n.clienteJuliana;let i={joao:`motorista-joao`,marcia:`motorista-marcia`},a=`alphalog-demo`,o={gestor:{id:`gestor`,option:`1`,actor:{companyId:a,userId:n.gestor,role:`gestor`},who:`Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes`,tools:[`painel_gestao`,`consulta_gestao`,`tabela_frete`],focus:`operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes`,intro:[`👔 *Modo Gestor ativado*`,`Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:`,``,`• _Como está a operação agora?_`,`• _Quanto faturamos nos últimos 30 dias?_`,`• _Algum veículo precisa de troca de óleo?_`,`• _Quanto cobramos da Mendes num utilitário?_`].join(`\n`)},motorista:{id:`motorista`,option:`2`,actor:{companyId:a,userId:n.motoristaJoao,role:`motorista`,driverId:i.joao},who:`João Pedro Nascimento, motorista fixo da AlphaLog Transportes`,tools:[`minhas_corridas`,`detalhe_carga`,`minha_documentacao`],focus:`rota do dia, ordem das entregas, horário de saída, previsão de coleta e entrega, dados da carga e documentação (CNH, veículo, óleo, checklist)`,intro:[`🚚 *Modo Motorista ativado*`,`Agora você é o *João*, motorista da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais são minhas entregas de hoje e a que horas eu saio?_`,`• _O que eu levo na carga 1007?_`,`• _Minha CNH e meu veículo estão em dia?_`].join(`\n`)},cliente:{id:`cliente`,option:`3`,actor:{companyId:a,userId:n.clienteRoberto,role:`cliente`,clientId:r.mendes},who:`Roberto Mendes, cliente da AlphaLog Transportes pela empresa Mendes Distribuidora Ltda`,tools:[`minhas_solicitacoes`,`acompanhar_carga`],focus:`status das próprias cargas, previsão de coleta e de entrega, quem é o motorista, onde está a carga e valor do frete`,intro:[`📦 *Modo Cliente ativado*`,`Agora você é o *Roberto*, da Mendes Distribuidora, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais cargas minhas estão em andamento?_`,`• _Quando chega a carga 1014?_`,`• _A carga 1002 já tem data de coleta?_`,``,`🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`].join(`\n`)}},s=`_Digite *4* para voltar ao menu_`;function c(e){let t=e?.trim().split(/\\s+/)[0];return[`👋 Olá${t?`, ${t}`:``}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,``,`Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):`,``,`*1* 👔 *Gestor* — operação, dados, custos e fretes`,`*2* 🚚 *Motorista* — rota, carga, horários e documentação`,`*3* 📦 *Cliente* — status, coleta e entrega da carga`,`*4* 🔄 Voltar a este menu (a qualquer momento)`,``,`Responda só com o número.`].join(`\n`)}function l(e){return Object.values(o).find(t=>t.option===e)}function u(e,t=new Date){return`Você é o Repdrive, agente de atendimento por WhatsApp da AlphaLog Transportes, uma transportadora.\nAgora: ${new Intl.DateTimeFormat(`pt-BR`,{timeZone:`America/Sao_Paulo`,dateStyle:`full`,timeStyle:`short`}).format(t)} (horário de Brasília).\n\nVocê está conversando com ${e.who}. Trate a pessoa por \"você\", como alguém da própria empresa falaria.\nAssuntos deste perfil: ${e.focus}.\n\nREGRAS\n1. Responda SOMENTE com dados obtidos pelas ferramentas ${e.tools.join(`, `)}. Nunca invente números, horários, nomes ou status. Chame a ferramenta antes de responder qualquer pergunta sobre dados.\n2. Se a ferramenta disser que algo não foi encontrado ou não está disponível para o perfil, diga isso com naturalidade — não tente contornar.\n3. Horários de coleta/entrega marcados como previsão são estimativas: deixe isso claro.\n4. Formato WhatsApp: curto (idealmente até 12 linhas), *negrito* com um asterisco, _itálico_ com sublinhado, listas com •. Nada de títulos com #, tabelas ou **dois asteriscos**. Mantenha links do mapa inteiros.\n5. Português do Brasil, tom cordial e objetivo. Emojis com moderação.\n6. Fora do escopo (assuntos não relacionados à transportadora): explique em uma frase o que você consegue responder neste perfil.\n7. Esta é uma demonstração com dados fictícios. Não mencione isso a cada mensagem; só se perguntarem.`}let d=[`4`,`menu`,`voltar`,`inicio`,`sair`,`0`];function f(e){return e.normalize(`NFD`).replace(/[̀-ͯ]/g,``).toLowerCase().trim().replace(/[.!*]+$/,``)}function p(e){let t=e.session??{persona:null,epoch:0,last:0},n=f(e.text),r=t.persona!==null&&e.now-t.last>18e5,i=l(n);if(i){let n={persona:i.id,epoch:t.epoch+1,last:e.now};return{kind:`send`,text:`${i.intro}\\n\\n${s}`,session:n}}if(t.persona===null||r||d.includes(n)){let n={persona:null,epoch:t.persona===null?t.epoch:t.epoch+1,last:e.now};return{kind:`send`,text:(r?`⏱️ Sua sessão de teste expirou por inatividade.\n\n`:``)+c(e.pushName),session:n}}let a={...t,last:e.now};return{kind:`agent`,persona:t.persona,memoryKey:`${e.sessionKey}#${t.epoch}`,systemPrompt:u(o[t.persona],new Date(e.now)),session:a}}function m(e){let t=(e??``).trim();return t?`${t.replace(/\\*\\*(.+?)\\*\\*/g,`*$1*`).replace(/__(.+?)__/g,`_$1_`).replace(/^#{1,6}\\s+(.+)$/gm,`*$1*`).replace(/^\\s*[-*]\\s+/gm,`• `).replace(/\\n{3,}/g,`\n\n`)}\\n\\n${s}`:`Tive um problema para consultar agora. Pode repetir a pergunta em instantes?\\n\\n${s}`}function h(e){return(e.message?.conversation??e.message?.extendedTextMessage?.text??e.message?.imageMessage?.caption??e.message?.videoMessage?.caption)?.trim()}function g(e,t,n,r=Date.now()){if(String(e.event??``).toLowerCase().replace(/_/g,`.`)!==`messages.upsert`)return null;let i=e.data,a=Array.isArray(i)?i[0]:i,o=a?.key;if(!a||!o?.remoteJid||!o.id||o.fromMe||(t.seen=t.seen??[],t.seen.includes(o.id)))return null;t.seen.push(o.id),t.seen.length>300&&t.seen.splice(0,t.seen.length-300);let s=o.remoteJid;if(!s.endsWith(`@g.us`))return null;let c=h(a),l=o.participant??a.participant??``,u=String(e.instance??``),d=(n.evolutionUrl||String(e.server_url??``)).replace(/\\/+$/,``),f=t=>({url:`${d}/message/sendText/${encodeURIComponent(u)}`,apikey:n.evolutionApiKey||String(e.apikey??``),body:{number:s,text:t,quoted:{key:{id:o.id,remoteJid:s,fromMe:!1,participant:l||void 0},message:{conversation:c??``}}}});t.demoGroups=t.demoGroups??[];let m=c?.toLowerCase();if(m===`/repdrive-id`)return{action:`send`,send:f(`ID deste grupo: ${s}`)};if(m===`/repdrive-ativar`)return t.demoGroups.includes(s)||t.demoGroups.push(s),{action:`send`,send:f(`✅ Demonstração do Repdrive ativada neste grupo. Mande qualquer mensagem para abrir o menu.`)};if(m===`/repdrive-desativar`)return t.demoGroups=t.demoGroups.filter(e=>e!==s),{action:`send`,send:f(`⏸️ Demonstração do Repdrive desativada neste grupo.`)};if(!n.demoGroupJids.includes(s)&&!t.demoGroups.includes(s))return null;let g=_(e)??`${s}|${l}`;if(t.sessions=t.sessions??{},v(t.sessions,r),!c)return t.sessions[g]?.persona?{action:`send`,send:f(`Por enquanto eu respondo só mensagens de texto. Pode digitar sua pergunta? 🙂`)}:null;let y=p({session:t.sessions[g],sessionKey:g,text:c,now:r,pushName:a.pushName});return t.sessions[g]=y.session,y.kind===`send`?{action:`send`,send:f(y.text)}:{action:`agent`,chatInput:c,systemPrompt:y.systemPrompt,memoryKey:y.memoryKey,persona:y.persona,send:f(``)}}function _(e){let t=e.data,n=Array.isArray(t)?t[0]:t;return n?.key?.remoteJid?`${n.key.remoteJid}|${n.key.participant??n.participant??``}`:null}function v(e,t){for(let[n,r]of Object.entries(e))t-r.last>864e5&&delete e[n]}return e.finalizeReply=m,e.handleWebhook=g,e.sessionKeyOf=_,e})({});\n\nconst body = $input.first().json.body ?? {};\nreturn [{ json: { body, sessionKey: Repdrive.sessionKeyOf(body) ?? \"sem-chave\" } }];"
+        "jsCode": "var Repdrive=(function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});let t=globalThis;if(typeof t.crypto?.randomUUID!=`function`){let e=0,n=()=>{e+=1;let t=(Date.now().toString(16)+e.toString(16).padStart(8,`0`)+Math.random().toString(16).slice(2)).padEnd(32,`0`);return`${t.slice(0,8)}-${t.slice(8,12)}-4${t.slice(13,16)}-a${t.slice(17,20)}-${t.slice(20,32)}`};try{t.crypto={...t.crypto??{},randomUUID:n}}catch{Object.defineProperty(globalThis,\"crypto\",{value:{randomUUID:n},configurable:!0})}}let n={admin:`user-admin`,gestor:`user-gestor`,assistente:`user-assistente`,motoristaJoao:`user-motorista-joao`,motoristaMarcia:`user-motorista-marcia`,clienteRoberto:`user-cliente-roberto`,clienteJuliana:`user-cliente-juliana`},r={mendes:`cliente-mendes`,construplus:`cliente-construplus`,boaVista:`cliente-boavista`,serraDourada:`cliente-serradourada`,monteVerde:`cliente-monteverde`,rioBonito:`cliente-riobonito`};r.mendes,n.clienteRoberto,r.construplus,n.clienteJuliana;let i={joao:`motorista-joao`,marcia:`motorista-marcia`},a=`alphalog-demo`,o={gestor:{id:`gestor`,option:`1`,actor:{companyId:a,userId:n.gestor,role:`gestor`},who:`Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes`,tools:[`painel_gestao`,`consulta_gestao`,`tabela_frete`],focus:`operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes`,intro:[`👔 *Modo Gestor ativado*`,`Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:`,``,`• _Como está a operação agora?_`,`• _Quanto faturamos nos últimos 30 dias?_`,`• _Algum veículo precisa de troca de óleo?_`,`• _Quanto cobramos da Mendes num utilitário?_`].join(`\n`)},motorista:{id:`motorista`,option:`2`,actor:{companyId:a,userId:n.motoristaJoao,role:`motorista`,driverId:i.joao},who:`João Pedro Nascimento, motorista fixo da AlphaLog Transportes`,tools:[`minhas_corridas`,`detalhe_carga`,`minha_documentacao`],focus:`rota do dia, ordem das entregas, horário de saída, previsão de coleta e entrega, dados da carga e documentação (CNH, veículo, óleo, checklist)`,intro:[`🚚 *Modo Motorista ativado*`,`Agora você é o *João*, motorista da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais são minhas entregas de hoje e a que horas eu saio?_`,`• _O que eu levo na carga 1007?_`,`• _Minha CNH e meu veículo estão em dia?_`].join(`\n`)},cliente:{id:`cliente`,option:`3`,actor:{companyId:a,userId:n.clienteRoberto,role:`cliente`,clientId:r.mendes},who:`Roberto Mendes, cliente da AlphaLog Transportes pela empresa Mendes Distribuidora Ltda`,tools:[`minhas_solicitacoes`,`acompanhar_carga`],focus:`status das próprias cargas, previsão de coleta e de entrega, quem é o motorista, onde está a carga e valor do frete`,intro:[`📦 *Modo Cliente ativado*`,`Agora você é o *Roberto*, da Mendes Distribuidora, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais cargas minhas estão em andamento?_`,`• _Quando chega a carga 1014?_`,`• _A carga 1002 já tem data de coleta?_`,``,`🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`].join(`\n`)}},s=`_Digite *4* para voltar ao menu_`;function c(e){let t=e?.trim().split(/\\s+/)[0];return[`👋 Olá${t?`, ${t}`:``}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,``,`Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):`,``,`*1* 👔 *Gestor* — operação, dados, custos e fretes`,`*2* 🚚 *Motorista* — rota, carga, horários e documentação`,`*3* 📦 *Cliente* — status, coleta e entrega da carga`,`*4* 🔄 Voltar a este menu (a qualquer momento)`,``,`Responda só com o número.`].join(`\n`)}function l(e){return Object.values(o).find(t=>t.option===e)}function u(e,t=new Date){return`Você é o Repdrive, agente de atendimento por WhatsApp da AlphaLog Transportes, uma transportadora.\nAgora: ${new Intl.DateTimeFormat(`pt-BR`,{timeZone:`America/Sao_Paulo`,dateStyle:`full`,timeStyle:`short`}).format(t)} (horário de Brasília).\n\nVocê está conversando com ${e.who}. Trate a pessoa por \"você\", como alguém da própria empresa falaria.\nAssuntos deste perfil: ${e.focus}.\n\nREGRAS\n1. Responda SOMENTE com dados obtidos pelas ferramentas ${e.tools.join(`, `)}. Nunca invente números, horários, nomes ou status. Chame a ferramenta antes de responder qualquer pergunta sobre dados.\n2. Se a ferramenta disser que algo não foi encontrado ou não está disponível para o perfil, diga isso com naturalidade — não tente contornar.\n3. Horários de coleta/entrega marcados como previsão são estimativas: deixe isso claro.\n4. Formato WhatsApp: curto (idealmente até 12 linhas), *negrito* com um asterisco, _itálico_ com sublinhado, listas com •. Nada de títulos com #, tabelas ou **dois asteriscos**. Mantenha links do mapa inteiros.\n5. Português do Brasil, tom cordial e objetivo. Emojis com moderação.\n6. Fora do escopo (assuntos não relacionados à transportadora): explique em uma frase o que você consegue responder neste perfil.\n7. Esta é uma demonstração com dados fictícios. Não mencione isso a cada mensagem; só se perguntarem.`}let d=[`4`,`menu`,`voltar`,`inicio`,`sair`,`0`],f={um:`1`,uma:`1`,dois:`2`,duas:`2`,tres:`3`,quatro:`4`};function p(e){let t=e.normalize(`NFD`).replace(/[\\u0300-\\u036f]/g,``).toLowerCase().trim().replace(/[.!*,]+$/,``);return f[t.replace(/^(opcao|numero|o|a)\\s+/,``)]??t}function m(e){let t=e.session??{persona:null,epoch:0,last:0},n=p(e.text),r=t.persona!==null&&e.now-t.last>18e5,i=l(n);if(i){let n={persona:i.id,epoch:t.epoch+1,last:e.now};return{kind:`send`,text:`${i.intro}\\n\\n${s}`,session:n}}if(t.persona===null||r||d.includes(n)){let n={persona:null,epoch:t.persona===null?t.epoch:t.epoch+1,last:e.now};return{kind:`send`,text:(r?`⏱️ Sua sessão de teste expirou por inatividade.\n\n`:``)+c(e.pushName),session:n}}let a={...t,last:e.now};return{kind:`agent`,persona:t.persona,memoryKey:`${e.sessionKey}#${t.epoch}`,systemPrompt:u(o[t.persona],new Date(e.now)),session:a}}function h(e){let t=(e??``).trim();return t?`${t.replace(/\\*\\*(.+?)\\*\\*/g,`*$1*`).replace(/__(.+?)__/g,`_$1_`).replace(/^#{1,6}\\s+(.+)$/gm,`*$1*`).replace(/^\\s*[-*]\\s+/gm,`• `).replace(/\\n{3,}/g,`\n\n`)}\\n\\n${s}`:`Tive um problema para consultar agora. Pode repetir a pergunta em instantes?\\n\\n${s}`}function g(e){return(e.message?.conversation??e.message?.extendedTextMessage?.text??e.message?.imageMessage?.caption??e.message?.videoMessage?.caption)?.trim()}function _(e){let t=e.data,n=Array.isArray(t)?t[0]:t,r=n?.message?.audioMessage;return!r||!n?.key?.id||n.key.fromMe?null:{messageId:n.key.id,mimetype:(r.mimetype??`audio/ogg`).split(`;`)[0].trim(),base64:n.message?.base64||void 0,seconds:r.seconds}}function v(e,t){let n=e.data,r=Array.isArray(n)?n[0]:n;return{...e,transcription:t,data:{...r,message:{conversation:t}}}}function y(e,t,n,r=Date.now()){if(String(e.event??``).toLowerCase().replace(/_/g,`.`)!==`messages.upsert`)return null;let i=e.data,a=Array.isArray(i)?i[0]:i,o=a?.key;if(!a||!o?.remoteJid||!o.id||o.fromMe||(t.seen=t.seen??[],t.seen.includes(o.id)))return null;t.seen.push(o.id),t.seen.length>300&&t.seen.splice(0,t.seen.length-300);let s=o.remoteJid;if(!s.endsWith(`@g.us`))return null;let c=g(a),l=o.participant??a.participant??``,u=String(e.instance??``),d=(n.evolutionUrl||String(e.server_url??``)).replace(/\\/+$/,``),f=t=>({url:`${d}/message/sendText/${encodeURIComponent(u)}`,apikey:n.evolutionApiKey||String(e.apikey??``),body:{number:s,text:t,quoted:{key:{id:o.id,remoteJid:s,fromMe:!1,participant:l||void 0},message:{conversation:c??``}}}});t.demoGroups=t.demoGroups??[];let p=c?.toLowerCase();if(p===`/repdrive-id`)return{action:`send`,send:f(`ID deste grupo: ${s}`)};if(p===`/repdrive-ativar`)return t.demoGroups.includes(s)||t.demoGroups.push(s),{action:`send`,send:f(`✅ Demonstração do Repdrive ativada neste grupo. Mande qualquer mensagem para abrir o menu.`)};if(p===`/repdrive-desativar`)return t.demoGroups=t.demoGroups.filter(e=>e!==s),{action:`send`,send:f(`⏸️ Demonstração do Repdrive desativada neste grupo.`)};if(!n.demoGroupJids.includes(s)&&!t.demoGroups.includes(s))return null;let h=b(e)??`${s}|${l}`;if(t.sessions=t.sessions??{},x(t.sessions,r),!c)return t.sessions[h]?.persona?{action:`send`,send:f(`Não consegui entender essa mensagem 🎧. Pode mandar o áudio de novo ou digitar a pergunta?`)}:null;let _=m({session:t.sessions[h],sessionKey:h,text:c,now:r,pushName:a.pushName});return t.sessions[h]=_.session,_.kind===`send`?{action:`send`,send:f(_.text)}:{action:`agent`,chatInput:c,systemPrompt:_.systemPrompt,memoryKey:_.memoryKey,persona:_.persona,send:f(``)}}function b(e){let t=e.data,n=Array.isArray(t)?t[0]:t;return n?.key?.remoteJid?`${n.key.remoteJid}|${n.key.participant??n.participant??``}`:null}function x(e,t){for(let[n,r]of Object.entries(e))t-r.last>864e5&&delete e[n]}return e.audioOf=_,e.finalizeReply=h,e.handleWebhook=y,e.sessionKeyOf=b,e.withTranscription=v,e})({});\n\nconst body = $input.first().json.body ?? {};\nreturn [{ json: { body, sessionKey: Repdrive.sessionKeyOf(body) ?? \"sem-chave\", audio: Repdrive.audioOf(body) } }];"
       }
     },
     {
       "id": "repdrive-3",
+      "name": "É áudio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond-audio",
+              "leftValue": "={{ !!$json.audio }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "repdrive-4",
+      "name": "Áudio veio no webhook?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        600,
+        560
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cond-b64",
+              "leftValue": "={{ !!$json.audio.base64 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      }
+    },
+    {
+      "id": "repdrive-5",
+      "name": "Baixar áudio (Evolution)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        800,
+        680
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ String($json.body.server_url || \"\").replace(/\\/+$/, \"\") + \"/chat/getBase64FromMediaMessage/\" + $json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $json.body.apikey }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ message: { key: { id: $json.audio.messageId } }, convertToMp4: false }) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "repdrive-6",
+      "name": "Preparar áudio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        560
+      ],
+      "parameters": {
+        "jsCode": "const c = $(\"Chave da sessão\").first().json;\nconst baixado = $input.first().json;\nconst b64 = c.audio.base64 || baixado.base64;\nif (!b64) return [{ json: { semAudio: true } }];\nconst ext = (c.audio.mimetype.split(\"/\")[1] || \"ogg\").replace(\"mpeg\", \"mp3\");\nreturn [{ json: {}, binary: { audio: { data: b64, mimeType: c.audio.mimetype, fileName: \"audio.\" + ext } } }];"
+      }
+    },
+    {
+      "id": "repdrive-7",
+      "name": "Transcrever (Groq Whisper)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1200,
+        560
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "audio"
+            },
+            {
+              "parameterType": "formData",
+              "name": "model",
+              "value": "whisper-large-v3-turbo"
+            },
+            {
+              "parameterType": "formData",
+              "name": "language",
+              "value": "pt"
+            },
+            {
+              "parameterType": "formData",
+              "name": "response_format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "BtVwcc4Z487N8TVC",
+          "name": "Groq Whisper"
+        }
+      }
+    },
+    {
+      "id": "repdrive-8",
+      "name": "Injetar transcrição",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        560
+      ],
+      "parameters": {
+        "jsCode": "var Repdrive=(function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});let t=globalThis;if(typeof t.crypto?.randomUUID!=`function`){let e=0,n=()=>{e+=1;let t=(Date.now().toString(16)+e.toString(16).padStart(8,`0`)+Math.random().toString(16).slice(2)).padEnd(32,`0`);return`${t.slice(0,8)}-${t.slice(8,12)}-4${t.slice(13,16)}-a${t.slice(17,20)}-${t.slice(20,32)}`};try{t.crypto={...t.crypto??{},randomUUID:n}}catch{Object.defineProperty(globalThis,\"crypto\",{value:{randomUUID:n},configurable:!0})}}let n={admin:`user-admin`,gestor:`user-gestor`,assistente:`user-assistente`,motoristaJoao:`user-motorista-joao`,motoristaMarcia:`user-motorista-marcia`,clienteRoberto:`user-cliente-roberto`,clienteJuliana:`user-cliente-juliana`},r={mendes:`cliente-mendes`,construplus:`cliente-construplus`,boaVista:`cliente-boavista`,serraDourada:`cliente-serradourada`,monteVerde:`cliente-monteverde`,rioBonito:`cliente-riobonito`};r.mendes,n.clienteRoberto,r.construplus,n.clienteJuliana;let i={joao:`motorista-joao`,marcia:`motorista-marcia`},a=`alphalog-demo`,o={gestor:{id:`gestor`,option:`1`,actor:{companyId:a,userId:n.gestor,role:`gestor`},who:`Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes`,tools:[`painel_gestao`,`consulta_gestao`,`tabela_frete`],focus:`operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes`,intro:[`👔 *Modo Gestor ativado*`,`Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:`,``,`• _Como está a operação agora?_`,`• _Quanto faturamos nos últimos 30 dias?_`,`• _Algum veículo precisa de troca de óleo?_`,`• _Quanto cobramos da Mendes num utilitário?_`].join(`\n`)},motorista:{id:`motorista`,option:`2`,actor:{companyId:a,userId:n.motoristaJoao,role:`motorista`,driverId:i.joao},who:`João Pedro Nascimento, motorista fixo da AlphaLog Transportes`,tools:[`minhas_corridas`,`detalhe_carga`,`minha_documentacao`],focus:`rota do dia, ordem das entregas, horário de saída, previsão de coleta e entrega, dados da carga e documentação (CNH, veículo, óleo, checklist)`,intro:[`🚚 *Modo Motorista ativado*`,`Agora você é o *João*, motorista da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais são minhas entregas de hoje e a que horas eu saio?_`,`• _O que eu levo na carga 1007?_`,`• _Minha CNH e meu veículo estão em dia?_`].join(`\n`)},cliente:{id:`cliente`,option:`3`,actor:{companyId:a,userId:n.clienteRoberto,role:`cliente`,clientId:r.mendes},who:`Roberto Mendes, cliente da AlphaLog Transportes pela empresa Mendes Distribuidora Ltda`,tools:[`minhas_solicitacoes`,`acompanhar_carga`],focus:`status das próprias cargas, previsão de coleta e de entrega, quem é o motorista, onde está a carga e valor do frete`,intro:[`📦 *Modo Cliente ativado*`,`Agora você é o *Roberto*, da Mendes Distribuidora, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais cargas minhas estão em andamento?_`,`• _Quando chega a carga 1014?_`,`• _A carga 1002 já tem data de coleta?_`,``,`🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`].join(`\n`)}},s=`_Digite *4* para voltar ao menu_`;function c(e){let t=e?.trim().split(/\\s+/)[0];return[`👋 Olá${t?`, ${t}`:``}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,``,`Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):`,``,`*1* 👔 *Gestor* — operação, dados, custos e fretes`,`*2* 🚚 *Motorista* — rota, carga, horários e documentação`,`*3* 📦 *Cliente* — status, coleta e entrega da carga`,`*4* 🔄 Voltar a este menu (a qualquer momento)`,``,`Responda só com o número.`].join(`\n`)}function l(e){return Object.values(o).find(t=>t.option===e)}function u(e,t=new Date){return`Você é o Repdrive, agente de atendimento por WhatsApp da AlphaLog Transportes, uma transportadora.\nAgora: ${new Intl.DateTimeFormat(`pt-BR`,{timeZone:`America/Sao_Paulo`,dateStyle:`full`,timeStyle:`short`}).format(t)} (horário de Brasília).\n\nVocê está conversando com ${e.who}. Trate a pessoa por \"você\", como alguém da própria empresa falaria.\nAssuntos deste perfil: ${e.focus}.\n\nREGRAS\n1. Responda SOMENTE com dados obtidos pelas ferramentas ${e.tools.join(`, `)}. Nunca invente números, horários, nomes ou status. Chame a ferramenta antes de responder qualquer pergunta sobre dados.\n2. Se a ferramenta disser que algo não foi encontrado ou não está disponível para o perfil, diga isso com naturalidade — não tente contornar.\n3. Horários de coleta/entrega marcados como previsão são estimativas: deixe isso claro.\n4. Formato WhatsApp: curto (idealmente até 12 linhas), *negrito* com um asterisco, _itálico_ com sublinhado, listas com •. Nada de títulos com #, tabelas ou **dois asteriscos**. Mantenha links do mapa inteiros.\n5. Português do Brasil, tom cordial e objetivo. Emojis com moderação.\n6. Fora do escopo (assuntos não relacionados à transportadora): explique em uma frase o que você consegue responder neste perfil.\n7. Esta é uma demonstração com dados fictícios. Não mencione isso a cada mensagem; só se perguntarem.`}let d=[`4`,`menu`,`voltar`,`inicio`,`sair`,`0`],f={um:`1`,uma:`1`,dois:`2`,duas:`2`,tres:`3`,quatro:`4`};function p(e){let t=e.normalize(`NFD`).replace(/[\\u0300-\\u036f]/g,``).toLowerCase().trim().replace(/[.!*,]+$/,``);return f[t.replace(/^(opcao|numero|o|a)\\s+/,``)]??t}function m(e){let t=e.session??{persona:null,epoch:0,last:0},n=p(e.text),r=t.persona!==null&&e.now-t.last>18e5,i=l(n);if(i){let n={persona:i.id,epoch:t.epoch+1,last:e.now};return{kind:`send`,text:`${i.intro}\\n\\n${s}`,session:n}}if(t.persona===null||r||d.includes(n)){let n={persona:null,epoch:t.persona===null?t.epoch:t.epoch+1,last:e.now};return{kind:`send`,text:(r?`⏱️ Sua sessão de teste expirou por inatividade.\n\n`:``)+c(e.pushName),session:n}}let a={...t,last:e.now};return{kind:`agent`,persona:t.persona,memoryKey:`${e.sessionKey}#${t.epoch}`,systemPrompt:u(o[t.persona],new Date(e.now)),session:a}}function h(e){let t=(e??``).trim();return t?`${t.replace(/\\*\\*(.+?)\\*\\*/g,`*$1*`).replace(/__(.+?)__/g,`_$1_`).replace(/^#{1,6}\\s+(.+)$/gm,`*$1*`).replace(/^\\s*[-*]\\s+/gm,`• `).replace(/\\n{3,}/g,`\n\n`)}\\n\\n${s}`:`Tive um problema para consultar agora. Pode repetir a pergunta em instantes?\\n\\n${s}`}function g(e){return(e.message?.conversation??e.message?.extendedTextMessage?.text??e.message?.imageMessage?.caption??e.message?.videoMessage?.caption)?.trim()}function _(e){let t=e.data,n=Array.isArray(t)?t[0]:t,r=n?.message?.audioMessage;return!r||!n?.key?.id||n.key.fromMe?null:{messageId:n.key.id,mimetype:(r.mimetype??`audio/ogg`).split(`;`)[0].trim(),base64:n.message?.base64||void 0,seconds:r.seconds}}function v(e,t){let n=e.data,r=Array.isArray(n)?n[0]:n;return{...e,transcription:t,data:{...r,message:{conversation:t}}}}function y(e,t,n,r=Date.now()){if(String(e.event??``).toLowerCase().replace(/_/g,`.`)!==`messages.upsert`)return null;let i=e.data,a=Array.isArray(i)?i[0]:i,o=a?.key;if(!a||!o?.remoteJid||!o.id||o.fromMe||(t.seen=t.seen??[],t.seen.includes(o.id)))return null;t.seen.push(o.id),t.seen.length>300&&t.seen.splice(0,t.seen.length-300);let s=o.remoteJid;if(!s.endsWith(`@g.us`))return null;let c=g(a),l=o.participant??a.participant??``,u=String(e.instance??``),d=(n.evolutionUrl||String(e.server_url??``)).replace(/\\/+$/,``),f=t=>({url:`${d}/message/sendText/${encodeURIComponent(u)}`,apikey:n.evolutionApiKey||String(e.apikey??``),body:{number:s,text:t,quoted:{key:{id:o.id,remoteJid:s,fromMe:!1,participant:l||void 0},message:{conversation:c??``}}}});t.demoGroups=t.demoGroups??[];let p=c?.toLowerCase();if(p===`/repdrive-id`)return{action:`send`,send:f(`ID deste grupo: ${s}`)};if(p===`/repdrive-ativar`)return t.demoGroups.includes(s)||t.demoGroups.push(s),{action:`send`,send:f(`✅ Demonstração do Repdrive ativada neste grupo. Mande qualquer mensagem para abrir o menu.`)};if(p===`/repdrive-desativar`)return t.demoGroups=t.demoGroups.filter(e=>e!==s),{action:`send`,send:f(`⏸️ Demonstração do Repdrive desativada neste grupo.`)};if(!n.demoGroupJids.includes(s)&&!t.demoGroups.includes(s))return null;let h=b(e)??`${s}|${l}`;if(t.sessions=t.sessions??{},x(t.sessions,r),!c)return t.sessions[h]?.persona?{action:`send`,send:f(`Não consegui entender essa mensagem 🎧. Pode mandar o áudio de novo ou digitar a pergunta?`)}:null;let _=m({session:t.sessions[h],sessionKey:h,text:c,now:r,pushName:a.pushName});return t.sessions[h]=_.session,_.kind===`send`?{action:`send`,send:f(_.text)}:{action:`agent`,chatInput:c,systemPrompt:_.systemPrompt,memoryKey:_.memoryKey,persona:_.persona,send:f(``)}}function b(e){let t=e.data,n=Array.isArray(t)?t[0]:t;return n?.key?.remoteJid?`${n.key.remoteJid}|${n.key.participant??n.participant??``}`:null}function x(e,t){for(let[n,r]of Object.entries(e))t-r.last>864e5&&delete e[n]}return e.audioOf=_,e.finalizeReply=h,e.handleWebhook=y,e.sessionKeyOf=b,e.withTranscription=v,e})({});\n\n// Troca o áudio pelo texto transcrito; sem transcrição, segue como áudio (o Roteador pede para digitar).\nconst c = $(\"Chave da sessão\").first().json;\nconst text = String($input.first().json.text ?? \"\").trim();\nif (!text) return [{ json: c }];\nreturn [{ json: { ...c, body: Repdrive.withTranscription(c.body, text) } }];"
+      }
+    },
+    {
+      "id": "repdrive-9",
       "name": "Ler sessão (Redis)",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        400,
+        1600,
         300
       ],
       "parameters": {
@@ -69,25 +247,25 @@
       }
     },
     {
-      "id": "repdrive-4",
+      "id": "repdrive-10",
       "name": "Roteador",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        600,
+        1800,
         300
       ],
       "parameters": {
-        "jsCode": "// ===== CONFIGURAÇÃO =====\n// Grupos fixos de demonstração (opcional — o normal é mandar /repdrive-ativar no grupo).\nconst DEMO_GROUP_JIDS = [\"120363412777463012@g.us\"];\n// Deixe vazio para usar a server_url e a apikey que a própria Evolution envia no webhook.\nconst EVOLUTION_URL = \"\";\nconst EVOLUTION_APIKEY = \"\";\n// =========================\n\nvar Repdrive=(function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});let t=globalThis;if(typeof t.crypto?.randomUUID!=`function`){let e=0,n=()=>{e+=1;let t=(Date.now().toString(16)+e.toString(16).padStart(8,`0`)+Math.random().toString(16).slice(2)).padEnd(32,`0`);return`${t.slice(0,8)}-${t.slice(8,12)}-4${t.slice(13,16)}-a${t.slice(17,20)}-${t.slice(20,32)}`};try{t.crypto={...t.crypto??{},randomUUID:n}}catch{Object.defineProperty(globalThis,\"crypto\",{value:{randomUUID:n},configurable:!0})}}let n={admin:`user-admin`,gestor:`user-gestor`,assistente:`user-assistente`,motoristaJoao:`user-motorista-joao`,motoristaMarcia:`user-motorista-marcia`,clienteRoberto:`user-cliente-roberto`,clienteJuliana:`user-cliente-juliana`},r={mendes:`cliente-mendes`,construplus:`cliente-construplus`,boaVista:`cliente-boavista`,serraDourada:`cliente-serradourada`,monteVerde:`cliente-monteverde`,rioBonito:`cliente-riobonito`};r.mendes,n.clienteRoberto,r.construplus,n.clienteJuliana;let i={joao:`motorista-joao`,marcia:`motorista-marcia`},a=`alphalog-demo`,o={gestor:{id:`gestor`,option:`1`,actor:{companyId:a,userId:n.gestor,role:`gestor`},who:`Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes`,tools:[`painel_gestao`,`consulta_gestao`,`tabela_frete`],focus:`operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes`,intro:[`👔 *Modo Gestor ativado*`,`Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:`,``,`• _Como está a operação agora?_`,`• _Quanto faturamos nos últimos 30 dias?_`,`• _Algum veículo precisa de troca de óleo?_`,`• _Quanto cobramos da Mendes num utilitário?_`].join(`\n`)},motorista:{id:`motorista`,option:`2`,actor:{companyId:a,userId:n.motoristaJoao,role:`motorista`,driverId:i.joao},who:`João Pedro Nascimento, motorista fixo da AlphaLog Transportes`,tools:[`minhas_corridas`,`detalhe_carga`,`minha_documentacao`],focus:`rota do dia, ordem das entregas, horário de saída, previsão de coleta e entrega, dados da carga e documentação (CNH, veículo, óleo, checklist)`,intro:[`🚚 *Modo Motorista ativado*`,`Agora você é o *João*, motorista da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais são minhas entregas de hoje e a que horas eu saio?_`,`• _O que eu levo na carga 1007?_`,`• _Minha CNH e meu veículo estão em dia?_`].join(`\n`)},cliente:{id:`cliente`,option:`3`,actor:{companyId:a,userId:n.clienteRoberto,role:`cliente`,clientId:r.mendes},who:`Roberto Mendes, cliente da AlphaLog Transportes pela empresa Mendes Distribuidora Ltda`,tools:[`minhas_solicitacoes`,`acompanhar_carga`],focus:`status das próprias cargas, previsão de coleta e de entrega, quem é o motorista, onde está a carga e valor do frete`,intro:[`📦 *Modo Cliente ativado*`,`Agora você é o *Roberto*, da Mendes Distribuidora, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais cargas minhas estão em andamento?_`,`• _Quando chega a carga 1014?_`,`• _A carga 1002 já tem data de coleta?_`,``,`🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`].join(`\n`)}},s=`_Digite *4* para voltar ao menu_`;function c(e){let t=e?.trim().split(/\\s+/)[0];return[`👋 Olá${t?`, ${t}`:``}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,``,`Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):`,``,`*1* 👔 *Gestor* — operação, dados, custos e fretes`,`*2* 🚚 *Motorista* — rota, carga, horários e documentação`,`*3* 📦 *Cliente* — status, coleta e entrega da carga`,`*4* 🔄 Voltar a este menu (a qualquer momento)`,``,`Responda só com o número.`].join(`\n`)}function l(e){return Object.values(o).find(t=>t.option===e)}function u(e,t=new Date){return`Você é o Repdrive, agente de atendimento por WhatsApp da AlphaLog Transportes, uma transportadora.\nAgora: ${new Intl.DateTimeFormat(`pt-BR`,{timeZone:`America/Sao_Paulo`,dateStyle:`full`,timeStyle:`short`}).format(t)} (horário de Brasília).\n\nVocê está conversando com ${e.who}. Trate a pessoa por \"você\", como alguém da própria empresa falaria.\nAssuntos deste perfil: ${e.focus}.\n\nREGRAS\n1. Responda SOMENTE com dados obtidos pelas ferramentas ${e.tools.join(`, `)}. Nunca invente números, horários, nomes ou status. Chame a ferramenta antes de responder qualquer pergunta sobre dados.\n2. Se a ferramenta disser que algo não foi encontrado ou não está disponível para o perfil, diga isso com naturalidade — não tente contornar.\n3. Horários de coleta/entrega marcados como previsão são estimativas: deixe isso claro.\n4. Formato WhatsApp: curto (idealmente até 12 linhas), *negrito* com um asterisco, _itálico_ com sublinhado, listas com •. Nada de títulos com #, tabelas ou **dois asteriscos**. Mantenha links do mapa inteiros.\n5. Português do Brasil, tom cordial e objetivo. Emojis com moderação.\n6. Fora do escopo (assuntos não relacionados à transportadora): explique em uma frase o que você consegue responder neste perfil.\n7. Esta é uma demonstração com dados fictícios. Não mencione isso a cada mensagem; só se perguntarem.`}let d=[`4`,`menu`,`voltar`,`inicio`,`sair`,`0`];function f(e){return e.normalize(`NFD`).replace(/[̀-ͯ]/g,``).toLowerCase().trim().replace(/[.!*]+$/,``)}function p(e){let t=e.session??{persona:null,epoch:0,last:0},n=f(e.text),r=t.persona!==null&&e.now-t.last>18e5,i=l(n);if(i){let n={persona:i.id,epoch:t.epoch+1,last:e.now};return{kind:`send`,text:`${i.intro}\\n\\n${s}`,session:n}}if(t.persona===null||r||d.includes(n)){let n={persona:null,epoch:t.persona===null?t.epoch:t.epoch+1,last:e.now};return{kind:`send`,text:(r?`⏱️ Sua sessão de teste expirou por inatividade.\n\n`:``)+c(e.pushName),session:n}}let a={...t,last:e.now};return{kind:`agent`,persona:t.persona,memoryKey:`${e.sessionKey}#${t.epoch}`,systemPrompt:u(o[t.persona],new Date(e.now)),session:a}}function m(e){let t=(e??``).trim();return t?`${t.replace(/\\*\\*(.+?)\\*\\*/g,`*$1*`).replace(/__(.+?)__/g,`_$1_`).replace(/^#{1,6}\\s+(.+)$/gm,`*$1*`).replace(/^\\s*[-*]\\s+/gm,`• `).replace(/\\n{3,}/g,`\n\n`)}\\n\\n${s}`:`Tive um problema para consultar agora. Pode repetir a pergunta em instantes?\\n\\n${s}`}function h(e){return(e.message?.conversation??e.message?.extendedTextMessage?.text??e.message?.imageMessage?.caption??e.message?.videoMessage?.caption)?.trim()}function g(e,t,n,r=Date.now()){if(String(e.event??``).toLowerCase().replace(/_/g,`.`)!==`messages.upsert`)return null;let i=e.data,a=Array.isArray(i)?i[0]:i,o=a?.key;if(!a||!o?.remoteJid||!o.id||o.fromMe||(t.seen=t.seen??[],t.seen.includes(o.id)))return null;t.seen.push(o.id),t.seen.length>300&&t.seen.splice(0,t.seen.length-300);let s=o.remoteJid;if(!s.endsWith(`@g.us`))return null;let c=h(a),l=o.participant??a.participant??``,u=String(e.instance??``),d=(n.evolutionUrl||String(e.server_url??``)).replace(/\\/+$/,``),f=t=>({url:`${d}/message/sendText/${encodeURIComponent(u)}`,apikey:n.evolutionApiKey||String(e.apikey??``),body:{number:s,text:t,quoted:{key:{id:o.id,remoteJid:s,fromMe:!1,participant:l||void 0},message:{conversation:c??``}}}});t.demoGroups=t.demoGroups??[];let m=c?.toLowerCase();if(m===`/repdrive-id`)return{action:`send`,send:f(`ID deste grupo: ${s}`)};if(m===`/repdrive-ativar`)return t.demoGroups.includes(s)||t.demoGroups.push(s),{action:`send`,send:f(`✅ Demonstração do Repdrive ativada neste grupo. Mande qualquer mensagem para abrir o menu.`)};if(m===`/repdrive-desativar`)return t.demoGroups=t.demoGroups.filter(e=>e!==s),{action:`send`,send:f(`⏸️ Demonstração do Repdrive desativada neste grupo.`)};if(!n.demoGroupJids.includes(s)&&!t.demoGroups.includes(s))return null;let g=_(e)??`${s}|${l}`;if(t.sessions=t.sessions??{},v(t.sessions,r),!c)return t.sessions[g]?.persona?{action:`send`,send:f(`Por enquanto eu respondo só mensagens de texto. Pode digitar sua pergunta? 🙂`)}:null;let y=p({session:t.sessions[g],sessionKey:g,text:c,now:r,pushName:a.pushName});return t.sessions[g]=y.session,y.kind===`send`?{action:`send`,send:f(y.text)}:{action:`agent`,chatInput:c,systemPrompt:y.systemPrompt,memoryKey:y.memoryKey,persona:y.persona,send:f(``)}}function _(e){let t=e.data,n=Array.isArray(t)?t[0]:t;return n?.key?.remoteJid?`${n.key.remoteJid}|${n.key.participant??n.participant??``}`:null}function v(e,t){for(let[n,r]of Object.entries(e))t-r.last>864e5&&delete e[n]}return e.finalizeReply=m,e.handleWebhook=g,e.sessionKeyOf=_,e})({});\n\n// A sessão do lead vem do Redis (nó anterior); só dedupe e grupos ativados ficam no static data.\n// o nó do Redis devolve só { session }; mensagem e chave vêm do nó \"Chave da sessão\"\nconst inp = { ...$(\"Chave da sessão\").first().json, session: $input.first().json.session };\nconst state = $getWorkflowStaticData(\"global\");\nconst work = { seen: state.seen, demoGroups: state.demoGroups, sessions: {} };\nif (inp.session) {\n  try {\n    work.sessions[inp.sessionKey] = typeof inp.session === \"string\" ? JSON.parse(inp.session) : inp.session;\n  } catch (e) {}\n}\nconst out = Repdrive.handleWebhook(inp.body ?? {}, work, {\n  demoGroupJids: DEMO_GROUP_JIDS,\n  evolutionUrl: EVOLUTION_URL,\n  evolutionApiKey: EVOLUTION_APIKEY,\n});\nstate.seen = work.seen;\nstate.demoGroups = work.demoGroups;\nif (!out) return [];\nconst session = work.sessions[inp.sessionKey];\nreturn [{ json: { ...out, sessionKey: inp.sessionKey, sessionJson: session ? JSON.stringify(session) : \"\" } }];"
+        "jsCode": "// ===== CONFIGURAÇÃO =====\n// Grupos fixos de demonstração (opcional — o normal é mandar /repdrive-ativar no grupo).\nconst DEMO_GROUP_JIDS = [\"120363412777463012@g.us\"];\n// Deixe vazio para usar a server_url e a apikey que a própria Evolution envia no webhook.\nconst EVOLUTION_URL = \"\";\nconst EVOLUTION_APIKEY = \"\";\n// =========================\n\nvar Repdrive=(function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});let t=globalThis;if(typeof t.crypto?.randomUUID!=`function`){let e=0,n=()=>{e+=1;let t=(Date.now().toString(16)+e.toString(16).padStart(8,`0`)+Math.random().toString(16).slice(2)).padEnd(32,`0`);return`${t.slice(0,8)}-${t.slice(8,12)}-4${t.slice(13,16)}-a${t.slice(17,20)}-${t.slice(20,32)}`};try{t.crypto={...t.crypto??{},randomUUID:n}}catch{Object.defineProperty(globalThis,\"crypto\",{value:{randomUUID:n},configurable:!0})}}let n={admin:`user-admin`,gestor:`user-gestor`,assistente:`user-assistente`,motoristaJoao:`user-motorista-joao`,motoristaMarcia:`user-motorista-marcia`,clienteRoberto:`user-cliente-roberto`,clienteJuliana:`user-cliente-juliana`},r={mendes:`cliente-mendes`,construplus:`cliente-construplus`,boaVista:`cliente-boavista`,serraDourada:`cliente-serradourada`,monteVerde:`cliente-monteverde`,rioBonito:`cliente-riobonito`};r.mendes,n.clienteRoberto,r.construplus,n.clienteJuliana;let i={joao:`motorista-joao`,marcia:`motorista-marcia`},a=`alphalog-demo`,o={gestor:{id:`gestor`,option:`1`,actor:{companyId:a,userId:n.gestor,role:`gestor`},who:`Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes`,tools:[`painel_gestao`,`consulta_gestao`,`tabela_frete`],focus:`operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes`,intro:[`👔 *Modo Gestor ativado*`,`Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:`,``,`• _Como está a operação agora?_`,`• _Quanto faturamos nos últimos 30 dias?_`,`• _Algum veículo precisa de troca de óleo?_`,`• _Quanto cobramos da Mendes num utilitário?_`].join(`\n`)},motorista:{id:`motorista`,option:`2`,actor:{companyId:a,userId:n.motoristaJoao,role:`motorista`,driverId:i.joao},who:`João Pedro Nascimento, motorista fixo da AlphaLog Transportes`,tools:[`minhas_corridas`,`detalhe_carga`,`minha_documentacao`],focus:`rota do dia, ordem das entregas, horário de saída, previsão de coleta e entrega, dados da carga e documentação (CNH, veículo, óleo, checklist)`,intro:[`🚚 *Modo Motorista ativado*`,`Agora você é o *João*, motorista da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais são minhas entregas de hoje e a que horas eu saio?_`,`• _O que eu levo na carga 1007?_`,`• _Minha CNH e meu veículo estão em dia?_`].join(`\n`)},cliente:{id:`cliente`,option:`3`,actor:{companyId:a,userId:n.clienteRoberto,role:`cliente`,clientId:r.mendes},who:`Roberto Mendes, cliente da AlphaLog Transportes pela empresa Mendes Distribuidora Ltda`,tools:[`minhas_solicitacoes`,`acompanhar_carga`],focus:`status das próprias cargas, previsão de coleta e de entrega, quem é o motorista, onde está a carga e valor do frete`,intro:[`📦 *Modo Cliente ativado*`,`Agora você é o *Roberto*, da Mendes Distribuidora, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais cargas minhas estão em andamento?_`,`• _Quando chega a carga 1014?_`,`• _A carga 1002 já tem data de coleta?_`,``,`🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`].join(`\n`)}},s=`_Digite *4* para voltar ao menu_`;function c(e){let t=e?.trim().split(/\\s+/)[0];return[`👋 Olá${t?`, ${t}`:``}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,``,`Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):`,``,`*1* 👔 *Gestor* — operação, dados, custos e fretes`,`*2* 🚚 *Motorista* — rota, carga, horários e documentação`,`*3* 📦 *Cliente* — status, coleta e entrega da carga`,`*4* 🔄 Voltar a este menu (a qualquer momento)`,``,`Responda só com o número.`].join(`\n`)}function l(e){return Object.values(o).find(t=>t.option===e)}function u(e,t=new Date){return`Você é o Repdrive, agente de atendimento por WhatsApp da AlphaLog Transportes, uma transportadora.\nAgora: ${new Intl.DateTimeFormat(`pt-BR`,{timeZone:`America/Sao_Paulo`,dateStyle:`full`,timeStyle:`short`}).format(t)} (horário de Brasília).\n\nVocê está conversando com ${e.who}. Trate a pessoa por \"você\", como alguém da própria empresa falaria.\nAssuntos deste perfil: ${e.focus}.\n\nREGRAS\n1. Responda SOMENTE com dados obtidos pelas ferramentas ${e.tools.join(`, `)}. Nunca invente números, horários, nomes ou status. Chame a ferramenta antes de responder qualquer pergunta sobre dados.\n2. Se a ferramenta disser que algo não foi encontrado ou não está disponível para o perfil, diga isso com naturalidade — não tente contornar.\n3. Horários de coleta/entrega marcados como previsão são estimativas: deixe isso claro.\n4. Formato WhatsApp: curto (idealmente até 12 linhas), *negrito* com um asterisco, _itálico_ com sublinhado, listas com •. Nada de títulos com #, tabelas ou **dois asteriscos**. Mantenha links do mapa inteiros.\n5. Português do Brasil, tom cordial e objetivo. Emojis com moderação.\n6. Fora do escopo (assuntos não relacionados à transportadora): explique em uma frase o que você consegue responder neste perfil.\n7. Esta é uma demonstração com dados fictícios. Não mencione isso a cada mensagem; só se perguntarem.`}let d=[`4`,`menu`,`voltar`,`inicio`,`sair`,`0`],f={um:`1`,uma:`1`,dois:`2`,duas:`2`,tres:`3`,quatro:`4`};function p(e){let t=e.normalize(`NFD`).replace(/[\\u0300-\\u036f]/g,``).toLowerCase().trim().replace(/[.!*,]+$/,``);return f[t.replace(/^(opcao|numero|o|a)\\s+/,``)]??t}function m(e){let t=e.session??{persona:null,epoch:0,last:0},n=p(e.text),r=t.persona!==null&&e.now-t.last>18e5,i=l(n);if(i){let n={persona:i.id,epoch:t.epoch+1,last:e.now};return{kind:`send`,text:`${i.intro}\\n\\n${s}`,session:n}}if(t.persona===null||r||d.includes(n)){let n={persona:null,epoch:t.persona===null?t.epoch:t.epoch+1,last:e.now};return{kind:`send`,text:(r?`⏱️ Sua sessão de teste expirou por inatividade.\n\n`:``)+c(e.pushName),session:n}}let a={...t,last:e.now};return{kind:`agent`,persona:t.persona,memoryKey:`${e.sessionKey}#${t.epoch}`,systemPrompt:u(o[t.persona],new Date(e.now)),session:a}}function h(e){let t=(e??``).trim();return t?`${t.replace(/\\*\\*(.+?)\\*\\*/g,`*$1*`).replace(/__(.+?)__/g,`_$1_`).replace(/^#{1,6}\\s+(.+)$/gm,`*$1*`).replace(/^\\s*[-*]\\s+/gm,`• `).replace(/\\n{3,}/g,`\n\n`)}\\n\\n${s}`:`Tive um problema para consultar agora. Pode repetir a pergunta em instantes?\\n\\n${s}`}function g(e){return(e.message?.conversation??e.message?.extendedTextMessage?.text??e.message?.imageMessage?.caption??e.message?.videoMessage?.caption)?.trim()}function _(e){let t=e.data,n=Array.isArray(t)?t[0]:t,r=n?.message?.audioMessage;return!r||!n?.key?.id||n.key.fromMe?null:{messageId:n.key.id,mimetype:(r.mimetype??`audio/ogg`).split(`;`)[0].trim(),base64:n.message?.base64||void 0,seconds:r.seconds}}function v(e,t){let n=e.data,r=Array.isArray(n)?n[0]:n;return{...e,transcription:t,data:{...r,message:{conversation:t}}}}function y(e,t,n,r=Date.now()){if(String(e.event??``).toLowerCase().replace(/_/g,`.`)!==`messages.upsert`)return null;let i=e.data,a=Array.isArray(i)?i[0]:i,o=a?.key;if(!a||!o?.remoteJid||!o.id||o.fromMe||(t.seen=t.seen??[],t.seen.includes(o.id)))return null;t.seen.push(o.id),t.seen.length>300&&t.seen.splice(0,t.seen.length-300);let s=o.remoteJid;if(!s.endsWith(`@g.us`))return null;let c=g(a),l=o.participant??a.participant??``,u=String(e.instance??``),d=(n.evolutionUrl||String(e.server_url??``)).replace(/\\/+$/,``),f=t=>({url:`${d}/message/sendText/${encodeURIComponent(u)}`,apikey:n.evolutionApiKey||String(e.apikey??``),body:{number:s,text:t,quoted:{key:{id:o.id,remoteJid:s,fromMe:!1,participant:l||void 0},message:{conversation:c??``}}}});t.demoGroups=t.demoGroups??[];let p=c?.toLowerCase();if(p===`/repdrive-id`)return{action:`send`,send:f(`ID deste grupo: ${s}`)};if(p===`/repdrive-ativar`)return t.demoGroups.includes(s)||t.demoGroups.push(s),{action:`send`,send:f(`✅ Demonstração do Repdrive ativada neste grupo. Mande qualquer mensagem para abrir o menu.`)};if(p===`/repdrive-desativar`)return t.demoGroups=t.demoGroups.filter(e=>e!==s),{action:`send`,send:f(`⏸️ Demonstração do Repdrive desativada neste grupo.`)};if(!n.demoGroupJids.includes(s)&&!t.demoGroups.includes(s))return null;let h=b(e)??`${s}|${l}`;if(t.sessions=t.sessions??{},x(t.sessions,r),!c)return t.sessions[h]?.persona?{action:`send`,send:f(`Não consegui entender essa mensagem 🎧. Pode mandar o áudio de novo ou digitar a pergunta?`)}:null;let _=m({session:t.sessions[h],sessionKey:h,text:c,now:r,pushName:a.pushName});return t.sessions[h]=_.session,_.kind===`send`?{action:`send`,send:f(_.text)}:{action:`agent`,chatInput:c,systemPrompt:_.systemPrompt,memoryKey:_.memoryKey,persona:_.persona,send:f(``)}}function b(e){let t=e.data,n=Array.isArray(t)?t[0]:t;return n?.key?.remoteJid?`${n.key.remoteJid}|${n.key.participant??n.participant??``}`:null}function x(e,t){for(let[n,r]of Object.entries(e))t-r.last>864e5&&delete e[n]}return e.audioOf=_,e.finalizeReply=h,e.handleWebhook=y,e.sessionKeyOf=b,e.withTranscription=v,e})({});\n\n// A sessão do lead vem do Redis (nó anterior); só dedupe e grupos ativados ficam no static data.\n// o nó do Redis devolve só { session }; mensagem e chave vêm do nó \"Chave da sessão\"\nconst src = $(\"Injetar transcrição\").isExecuted ? $(\"Injetar transcrição\").first().json : $(\"Chave da sessão\").first().json;\nconst inp = { ...src, session: $input.first().json.session };\nconst state = $getWorkflowStaticData(\"global\");\nconst work = { seen: state.seen, demoGroups: state.demoGroups, sessions: {} };\nif (inp.session) {\n  try {\n    work.sessions[inp.sessionKey] = typeof inp.session === \"string\" ? JSON.parse(inp.session) : inp.session;\n  } catch (e) {}\n}\nconst out = Repdrive.handleWebhook(inp.body ?? {}, work, {\n  demoGroupJids: DEMO_GROUP_JIDS,\n  evolutionUrl: EVOLUTION_URL,\n  evolutionApiKey: EVOLUTION_APIKEY,\n});\nstate.seen = work.seen;\nstate.demoGroups = work.demoGroups;\nif (!out) return [];\nconst session = work.sessions[inp.sessionKey];\nreturn [{ json: { ...out, sessionKey: inp.sessionKey, sessionJson: session ? JSON.stringify(session) : \"\" } }];"
       }
     },
     {
-      "id": "repdrive-5",
+      "id": "repdrive-11",
       "name": "Gravar sessão (Redis)",
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        820,
+        2020,
         100
       ],
       "parameters": {
@@ -106,12 +284,12 @@
       }
     },
     {
-      "id": "repdrive-6",
+      "id": "repdrive-12",
       "name": "Precisa da IA?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        820,
+        2020,
         300
       ],
       "parameters": {
@@ -139,12 +317,12 @@
       }
     },
     {
-      "id": "repdrive-8",
+      "id": "repdrive-14",
       "name": "Responder com dados AlphaLog",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1260,
+        2460,
         160
       ],
       "parameters": {
@@ -152,12 +330,12 @@
       }
     },
     {
-      "id": "repdrive-7",
+      "id": "repdrive-13",
       "name": "Agente Repdrive",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1060,
+        2260,
         160
       ],
       "parameters": {
@@ -171,12 +349,12 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "repdrive-9",
+      "id": "repdrive-15",
       "name": "Claude (Anthropic)",
       "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
       "typeVersion": 1.3,
       "position": [
-        960,
+        2160,
         440
       ],
       "parameters": {
@@ -198,12 +376,12 @@
       }
     },
     {
-      "id": "repdrive-10",
+      "id": "repdrive-16",
       "name": "Memória da conversa (Redis)",
       "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
       "typeVersion": 1.6,
       "position": [
-        1120,
+        2320,
         440
       ],
       "parameters": {
@@ -220,12 +398,12 @@
       }
     },
     {
-      "id": "repdrive-11",
+      "id": "repdrive-17",
       "name": "painel_gestao",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1280,
+        2480,
         440
       ],
       "parameters": {
@@ -341,12 +519,12 @@
       }
     },
     {
-      "id": "repdrive-12",
+      "id": "repdrive-18",
       "name": "consulta_gestao",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1440,
+        2640,
         440
       ],
       "parameters": {
@@ -462,12 +640,12 @@
       }
     },
     {
-      "id": "repdrive-13",
+      "id": "repdrive-19",
       "name": "tabela_frete",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1600,
+        2800,
         440
       ],
       "parameters": {
@@ -585,12 +763,12 @@
       }
     },
     {
-      "id": "repdrive-14",
+      "id": "repdrive-20",
       "name": "minhas_corridas",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1760,
+        2960,
         440
       ],
       "parameters": {
@@ -706,12 +884,12 @@
       }
     },
     {
-      "id": "repdrive-15",
+      "id": "repdrive-21",
       "name": "detalhe_carga",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1280,
+        2480,
         600
       ],
       "parameters": {
@@ -827,12 +1005,12 @@
       }
     },
     {
-      "id": "repdrive-16",
+      "id": "repdrive-22",
       "name": "minha_documentacao",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1440,
+        2640,
         600
       ],
       "parameters": {
@@ -947,12 +1125,12 @@
       }
     },
     {
-      "id": "repdrive-17",
+      "id": "repdrive-23",
       "name": "minhas_solicitacoes",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1600,
+        2800,
         600
       ],
       "parameters": {
@@ -1068,12 +1246,12 @@
       }
     },
     {
-      "id": "repdrive-18",
+      "id": "repdrive-24",
       "name": "acompanhar_carga",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        1760,
+        2960,
         600
       ],
       "parameters": {
@@ -1189,25 +1367,25 @@
       }
     },
     {
-      "id": "repdrive-19",
+      "id": "repdrive-25",
       "name": "Montar resposta",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1460,
+        2660,
         160
       ],
       "parameters": {
-        "jsCode": "var Repdrive=(function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});let t=globalThis;if(typeof t.crypto?.randomUUID!=`function`){let e=0,n=()=>{e+=1;let t=(Date.now().toString(16)+e.toString(16).padStart(8,`0`)+Math.random().toString(16).slice(2)).padEnd(32,`0`);return`${t.slice(0,8)}-${t.slice(8,12)}-4${t.slice(13,16)}-a${t.slice(17,20)}-${t.slice(20,32)}`};try{t.crypto={...t.crypto??{},randomUUID:n}}catch{Object.defineProperty(globalThis,\"crypto\",{value:{randomUUID:n},configurable:!0})}}let n={admin:`user-admin`,gestor:`user-gestor`,assistente:`user-assistente`,motoristaJoao:`user-motorista-joao`,motoristaMarcia:`user-motorista-marcia`,clienteRoberto:`user-cliente-roberto`,clienteJuliana:`user-cliente-juliana`},r={mendes:`cliente-mendes`,construplus:`cliente-construplus`,boaVista:`cliente-boavista`,serraDourada:`cliente-serradourada`,monteVerde:`cliente-monteverde`,rioBonito:`cliente-riobonito`};r.mendes,n.clienteRoberto,r.construplus,n.clienteJuliana;let i={joao:`motorista-joao`,marcia:`motorista-marcia`},a=`alphalog-demo`,o={gestor:{id:`gestor`,option:`1`,actor:{companyId:a,userId:n.gestor,role:`gestor`},who:`Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes`,tools:[`painel_gestao`,`consulta_gestao`,`tabela_frete`],focus:`operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes`,intro:[`👔 *Modo Gestor ativado*`,`Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:`,``,`• _Como está a operação agora?_`,`• _Quanto faturamos nos últimos 30 dias?_`,`• _Algum veículo precisa de troca de óleo?_`,`• _Quanto cobramos da Mendes num utilitário?_`].join(`\n`)},motorista:{id:`motorista`,option:`2`,actor:{companyId:a,userId:n.motoristaJoao,role:`motorista`,driverId:i.joao},who:`João Pedro Nascimento, motorista fixo da AlphaLog Transportes`,tools:[`minhas_corridas`,`detalhe_carga`,`minha_documentacao`],focus:`rota do dia, ordem das entregas, horário de saída, previsão de coleta e entrega, dados da carga e documentação (CNH, veículo, óleo, checklist)`,intro:[`🚚 *Modo Motorista ativado*`,`Agora você é o *João*, motorista da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais são minhas entregas de hoje e a que horas eu saio?_`,`• _O que eu levo na carga 1007?_`,`• _Minha CNH e meu veículo estão em dia?_`].join(`\n`)},cliente:{id:`cliente`,option:`3`,actor:{companyId:a,userId:n.clienteRoberto,role:`cliente`,clientId:r.mendes},who:`Roberto Mendes, cliente da AlphaLog Transportes pela empresa Mendes Distribuidora Ltda`,tools:[`minhas_solicitacoes`,`acompanhar_carga`],focus:`status das próprias cargas, previsão de coleta e de entrega, quem é o motorista, onde está a carga e valor do frete`,intro:[`📦 *Modo Cliente ativado*`,`Agora você é o *Roberto*, da Mendes Distribuidora, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais cargas minhas estão em andamento?_`,`• _Quando chega a carga 1014?_`,`• _A carga 1002 já tem data de coleta?_`,``,`🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`].join(`\n`)}},s=`_Digite *4* para voltar ao menu_`;function c(e){let t=e?.trim().split(/\\s+/)[0];return[`👋 Olá${t?`, ${t}`:``}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,``,`Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):`,``,`*1* 👔 *Gestor* — operação, dados, custos e fretes`,`*2* 🚚 *Motorista* — rota, carga, horários e documentação`,`*3* 📦 *Cliente* — status, coleta e entrega da carga`,`*4* 🔄 Voltar a este menu (a qualquer momento)`,``,`Responda só com o número.`].join(`\n`)}function l(e){return Object.values(o).find(t=>t.option===e)}function u(e,t=new Date){return`Você é o Repdrive, agente de atendimento por WhatsApp da AlphaLog Transportes, uma transportadora.\nAgora: ${new Intl.DateTimeFormat(`pt-BR`,{timeZone:`America/Sao_Paulo`,dateStyle:`full`,timeStyle:`short`}).format(t)} (horário de Brasília).\n\nVocê está conversando com ${e.who}. Trate a pessoa por \"você\", como alguém da própria empresa falaria.\nAssuntos deste perfil: ${e.focus}.\n\nREGRAS\n1. Responda SOMENTE com dados obtidos pelas ferramentas ${e.tools.join(`, `)}. Nunca invente números, horários, nomes ou status. Chame a ferramenta antes de responder qualquer pergunta sobre dados.\n2. Se a ferramenta disser que algo não foi encontrado ou não está disponível para o perfil, diga isso com naturalidade — não tente contornar.\n3. Horários de coleta/entrega marcados como previsão são estimativas: deixe isso claro.\n4. Formato WhatsApp: curto (idealmente até 12 linhas), *negrito* com um asterisco, _itálico_ com sublinhado, listas com •. Nada de títulos com #, tabelas ou **dois asteriscos**. Mantenha links do mapa inteiros.\n5. Português do Brasil, tom cordial e objetivo. Emojis com moderação.\n6. Fora do escopo (assuntos não relacionados à transportadora): explique em uma frase o que você consegue responder neste perfil.\n7. Esta é uma demonstração com dados fictícios. Não mencione isso a cada mensagem; só se perguntarem.`}let d=[`4`,`menu`,`voltar`,`inicio`,`sair`,`0`];function f(e){return e.normalize(`NFD`).replace(/[̀-ͯ]/g,``).toLowerCase().trim().replace(/[.!*]+$/,``)}function p(e){let t=e.session??{persona:null,epoch:0,last:0},n=f(e.text),r=t.persona!==null&&e.now-t.last>18e5,i=l(n);if(i){let n={persona:i.id,epoch:t.epoch+1,last:e.now};return{kind:`send`,text:`${i.intro}\\n\\n${s}`,session:n}}if(t.persona===null||r||d.includes(n)){let n={persona:null,epoch:t.persona===null?t.epoch:t.epoch+1,last:e.now};return{kind:`send`,text:(r?`⏱️ Sua sessão de teste expirou por inatividade.\n\n`:``)+c(e.pushName),session:n}}let a={...t,last:e.now};return{kind:`agent`,persona:t.persona,memoryKey:`${e.sessionKey}#${t.epoch}`,systemPrompt:u(o[t.persona],new Date(e.now)),session:a}}function m(e){let t=(e??``).trim();return t?`${t.replace(/\\*\\*(.+?)\\*\\*/g,`*$1*`).replace(/__(.+?)__/g,`_$1_`).replace(/^#{1,6}\\s+(.+)$/gm,`*$1*`).replace(/^\\s*[-*]\\s+/gm,`• `).replace(/\\n{3,}/g,`\n\n`)}\\n\\n${s}`:`Tive um problema para consultar agora. Pode repetir a pergunta em instantes?\\n\\n${s}`}function h(e){return(e.message?.conversation??e.message?.extendedTextMessage?.text??e.message?.imageMessage?.caption??e.message?.videoMessage?.caption)?.trim()}function g(e,t,n,r=Date.now()){if(String(e.event??``).toLowerCase().replace(/_/g,`.`)!==`messages.upsert`)return null;let i=e.data,a=Array.isArray(i)?i[0]:i,o=a?.key;if(!a||!o?.remoteJid||!o.id||o.fromMe||(t.seen=t.seen??[],t.seen.includes(o.id)))return null;t.seen.push(o.id),t.seen.length>300&&t.seen.splice(0,t.seen.length-300);let s=o.remoteJid;if(!s.endsWith(`@g.us`))return null;let c=h(a),l=o.participant??a.participant??``,u=String(e.instance??``),d=(n.evolutionUrl||String(e.server_url??``)).replace(/\\/+$/,``),f=t=>({url:`${d}/message/sendText/${encodeURIComponent(u)}`,apikey:n.evolutionApiKey||String(e.apikey??``),body:{number:s,text:t,quoted:{key:{id:o.id,remoteJid:s,fromMe:!1,participant:l||void 0},message:{conversation:c??``}}}});t.demoGroups=t.demoGroups??[];let m=c?.toLowerCase();if(m===`/repdrive-id`)return{action:`send`,send:f(`ID deste grupo: ${s}`)};if(m===`/repdrive-ativar`)return t.demoGroups.includes(s)||t.demoGroups.push(s),{action:`send`,send:f(`✅ Demonstração do Repdrive ativada neste grupo. Mande qualquer mensagem para abrir o menu.`)};if(m===`/repdrive-desativar`)return t.demoGroups=t.demoGroups.filter(e=>e!==s),{action:`send`,send:f(`⏸️ Demonstração do Repdrive desativada neste grupo.`)};if(!n.demoGroupJids.includes(s)&&!t.demoGroups.includes(s))return null;let g=_(e)??`${s}|${l}`;if(t.sessions=t.sessions??{},v(t.sessions,r),!c)return t.sessions[g]?.persona?{action:`send`,send:f(`Por enquanto eu respondo só mensagens de texto. Pode digitar sua pergunta? 🙂`)}:null;let y=p({session:t.sessions[g],sessionKey:g,text:c,now:r,pushName:a.pushName});return t.sessions[g]=y.session,y.kind===`send`?{action:`send`,send:f(y.text)}:{action:`agent`,chatInput:c,systemPrompt:y.systemPrompt,memoryKey:y.memoryKey,persona:y.persona,send:f(``)}}function _(e){let t=e.data,n=Array.isArray(t)?t[0]:t;return n?.key?.remoteJid?`${n.key.remoteJid}|${n.key.participant??n.participant??``}`:null}function v(e,t){for(let[n,r]of Object.entries(e))t-r.last>864e5&&delete e[n]}return e.finalizeReply=m,e.handleWebhook=g,e.sessionKeyOf=_,e})({});\n\nconst r = $(\"Roteador\").first().json;\nconst text = Repdrive.finalizeReply($input.first().json.output);\nreturn [{ json: { send: { ...r.send, body: { ...r.send.body, text } } } }];"
+        "jsCode": "var Repdrive=(function(e){Object.defineProperty(e,Symbol.toStringTag,{value:`Module`});let t=globalThis;if(typeof t.crypto?.randomUUID!=`function`){let e=0,n=()=>{e+=1;let t=(Date.now().toString(16)+e.toString(16).padStart(8,`0`)+Math.random().toString(16).slice(2)).padEnd(32,`0`);return`${t.slice(0,8)}-${t.slice(8,12)}-4${t.slice(13,16)}-a${t.slice(17,20)}-${t.slice(20,32)}`};try{t.crypto={...t.crypto??{},randomUUID:n}}catch{Object.defineProperty(globalThis,\"crypto\",{value:{randomUUID:n},configurable:!0})}}let n={admin:`user-admin`,gestor:`user-gestor`,assistente:`user-assistente`,motoristaJoao:`user-motorista-joao`,motoristaMarcia:`user-motorista-marcia`,clienteRoberto:`user-cliente-roberto`,clienteJuliana:`user-cliente-juliana`},r={mendes:`cliente-mendes`,construplus:`cliente-construplus`,boaVista:`cliente-boavista`,serraDourada:`cliente-serradourada`,monteVerde:`cliente-monteverde`,rioBonito:`cliente-riobonito`};r.mendes,n.clienteRoberto,r.construplus,n.clienteJuliana;let i={joao:`motorista-joao`,marcia:`motorista-marcia`},a=`alphalog-demo`,o={gestor:{id:`gestor`,option:`1`,actor:{companyId:a,userId:n.gestor,role:`gestor`},who:`Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes`,tools:[`painel_gestao`,`consulta_gestao`,`tabela_frete`],focus:`operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes`,intro:[`👔 *Modo Gestor ativado*`,`Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:`,``,`• _Como está a operação agora?_`,`• _Quanto faturamos nos últimos 30 dias?_`,`• _Algum veículo precisa de troca de óleo?_`,`• _Quanto cobramos da Mendes num utilitário?_`].join(`\n`)},motorista:{id:`motorista`,option:`2`,actor:{companyId:a,userId:n.motoristaJoao,role:`motorista`,driverId:i.joao},who:`João Pedro Nascimento, motorista fixo da AlphaLog Transportes`,tools:[`minhas_corridas`,`detalhe_carga`,`minha_documentacao`],focus:`rota do dia, ordem das entregas, horário de saída, previsão de coleta e entrega, dados da carga e documentação (CNH, veículo, óleo, checklist)`,intro:[`🚚 *Modo Motorista ativado*`,`Agora você é o *João*, motorista da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais são minhas entregas de hoje e a que horas eu saio?_`,`• _O que eu levo na carga 1007?_`,`• _Minha CNH e meu veículo estão em dia?_`].join(`\n`)},cliente:{id:`cliente`,option:`3`,actor:{companyId:a,userId:n.clienteRoberto,role:`cliente`,clientId:r.mendes},who:`Roberto Mendes, cliente da AlphaLog Transportes pela empresa Mendes Distribuidora Ltda`,tools:[`minhas_solicitacoes`,`acompanhar_carga`],focus:`status das próprias cargas, previsão de coleta e de entrega, quem é o motorista, onde está a carga e valor do frete`,intro:[`📦 *Modo Cliente ativado*`,`Agora você é o *Roberto*, da Mendes Distribuidora, cliente da AlphaLog Transportes. Pergunte, por exemplo:`,``,`• _Quais cargas minhas estão em andamento?_`,`• _Quando chega a carga 1014?_`,`• _A carga 1002 já tem data de coleta?_`,``,`🔒 Tente perguntar pela carga *1013* (de outro cliente) para ver que cada cliente só enxerga o que é dele.`].join(`\n`)}},s=`_Digite *4* para voltar ao menu_`;function c(e){let t=e?.trim().split(/\\s+/)[0];return[`👋 Olá${t?`, ${t}`:``}! Eu sou o *Repdrive*, o agente de IA que atende a transportadora pelo WhatsApp — 24h, direto do sistema dela.`,``,`Escolha um perfil para ver na prática como eu atuo no dia a dia (dados fictícios):`,``,`*1* 👔 *Gestor* — operação, dados, custos e fretes`,`*2* 🚚 *Motorista* — rota, carga, horários e documentação`,`*3* 📦 *Cliente* — status, coleta e entrega da carga`,`*4* 🔄 Voltar a este menu (a qualquer momento)`,``,`Responda só com o número.`].join(`\n`)}function l(e){return Object.values(o).find(t=>t.option===e)}function u(e,t=new Date){return`Você é o Repdrive, agente de atendimento por WhatsApp da AlphaLog Transportes, uma transportadora.\nAgora: ${new Intl.DateTimeFormat(`pt-BR`,{timeZone:`America/Sao_Paulo`,dateStyle:`full`,timeStyle:`short`}).format(t)} (horário de Brasília).\n\nVocê está conversando com ${e.who}. Trate a pessoa por \"você\", como alguém da própria empresa falaria.\nAssuntos deste perfil: ${e.focus}.\n\nREGRAS\n1. Responda SOMENTE com dados obtidos pelas ferramentas ${e.tools.join(`, `)}. Nunca invente números, horários, nomes ou status. Chame a ferramenta antes de responder qualquer pergunta sobre dados.\n2. Se a ferramenta disser que algo não foi encontrado ou não está disponível para o perfil, diga isso com naturalidade — não tente contornar.\n3. Horários de coleta/entrega marcados como previsão são estimativas: deixe isso claro.\n4. Formato WhatsApp: curto (idealmente até 12 linhas), *negrito* com um asterisco, _itálico_ com sublinhado, listas com •. Nada de títulos com #, tabelas ou **dois asteriscos**. Mantenha links do mapa inteiros.\n5. Português do Brasil, tom cordial e objetivo. Emojis com moderação.\n6. Fora do escopo (assuntos não relacionados à transportadora): explique em uma frase o que você consegue responder neste perfil.\n7. Esta é uma demonstração com dados fictícios. Não mencione isso a cada mensagem; só se perguntarem.`}let d=[`4`,`menu`,`voltar`,`inicio`,`sair`,`0`],f={um:`1`,uma:`1`,dois:`2`,duas:`2`,tres:`3`,quatro:`4`};function p(e){let t=e.normalize(`NFD`).replace(/[\\u0300-\\u036f]/g,``).toLowerCase().trim().replace(/[.!*,]+$/,``);return f[t.replace(/^(opcao|numero|o|a)\\s+/,``)]??t}function m(e){let t=e.session??{persona:null,epoch:0,last:0},n=p(e.text),r=t.persona!==null&&e.now-t.last>18e5,i=l(n);if(i){let n={persona:i.id,epoch:t.epoch+1,last:e.now};return{kind:`send`,text:`${i.intro}\\n\\n${s}`,session:n}}if(t.persona===null||r||d.includes(n)){let n={persona:null,epoch:t.persona===null?t.epoch:t.epoch+1,last:e.now};return{kind:`send`,text:(r?`⏱️ Sua sessão de teste expirou por inatividade.\n\n`:``)+c(e.pushName),session:n}}let a={...t,last:e.now};return{kind:`agent`,persona:t.persona,memoryKey:`${e.sessionKey}#${t.epoch}`,systemPrompt:u(o[t.persona],new Date(e.now)),session:a}}function h(e){let t=(e??``).trim();return t?`${t.replace(/\\*\\*(.+?)\\*\\*/g,`*$1*`).replace(/__(.+?)__/g,`_$1_`).replace(/^#{1,6}\\s+(.+)$/gm,`*$1*`).replace(/^\\s*[-*]\\s+/gm,`• `).replace(/\\n{3,}/g,`\n\n`)}\\n\\n${s}`:`Tive um problema para consultar agora. Pode repetir a pergunta em instantes?\\n\\n${s}`}function g(e){return(e.message?.conversation??e.message?.extendedTextMessage?.text??e.message?.imageMessage?.caption??e.message?.videoMessage?.caption)?.trim()}function _(e){let t=e.data,n=Array.isArray(t)?t[0]:t,r=n?.message?.audioMessage;return!r||!n?.key?.id||n.key.fromMe?null:{messageId:n.key.id,mimetype:(r.mimetype??`audio/ogg`).split(`;`)[0].trim(),base64:n.message?.base64||void 0,seconds:r.seconds}}function v(e,t){let n=e.data,r=Array.isArray(n)?n[0]:n;return{...e,transcription:t,data:{...r,message:{conversation:t}}}}function y(e,t,n,r=Date.now()){if(String(e.event??``).toLowerCase().replace(/_/g,`.`)!==`messages.upsert`)return null;let i=e.data,a=Array.isArray(i)?i[0]:i,o=a?.key;if(!a||!o?.remoteJid||!o.id||o.fromMe||(t.seen=t.seen??[],t.seen.includes(o.id)))return null;t.seen.push(o.id),t.seen.length>300&&t.seen.splice(0,t.seen.length-300);let s=o.remoteJid;if(!s.endsWith(`@g.us`))return null;let c=g(a),l=o.participant??a.participant??``,u=String(e.instance??``),d=(n.evolutionUrl||String(e.server_url??``)).replace(/\\/+$/,``),f=t=>({url:`${d}/message/sendText/${encodeURIComponent(u)}`,apikey:n.evolutionApiKey||String(e.apikey??``),body:{number:s,text:t,quoted:{key:{id:o.id,remoteJid:s,fromMe:!1,participant:l||void 0},message:{conversation:c??``}}}});t.demoGroups=t.demoGroups??[];let p=c?.toLowerCase();if(p===`/repdrive-id`)return{action:`send`,send:f(`ID deste grupo: ${s}`)};if(p===`/repdrive-ativar`)return t.demoGroups.includes(s)||t.demoGroups.push(s),{action:`send`,send:f(`✅ Demonstração do Repdrive ativada neste grupo. Mande qualquer mensagem para abrir o menu.`)};if(p===`/repdrive-desativar`)return t.demoGroups=t.demoGroups.filter(e=>e!==s),{action:`send`,send:f(`⏸️ Demonstração do Repdrive desativada neste grupo.`)};if(!n.demoGroupJids.includes(s)&&!t.demoGroups.includes(s))return null;let h=b(e)??`${s}|${l}`;if(t.sessions=t.sessions??{},x(t.sessions,r),!c)return t.sessions[h]?.persona?{action:`send`,send:f(`Não consegui entender essa mensagem 🎧. Pode mandar o áudio de novo ou digitar a pergunta?`)}:null;let _=m({session:t.sessions[h],sessionKey:h,text:c,now:r,pushName:a.pushName});return t.sessions[h]=_.session,_.kind===`send`?{action:`send`,send:f(_.text)}:{action:`agent`,chatInput:c,systemPrompt:_.systemPrompt,memoryKey:_.memoryKey,persona:_.persona,send:f(``)}}function b(e){let t=e.data,n=Array.isArray(t)?t[0]:t;return n?.key?.remoteJid?`${n.key.remoteJid}|${n.key.participant??n.participant??``}`:null}function x(e,t){for(let[n,r]of Object.entries(e))t-r.last>864e5&&delete e[n]}return e.audioOf=_,e.finalizeReply=h,e.handleWebhook=y,e.sessionKeyOf=b,e.withTranscription=v,e})({});\n\nconst r = $(\"Roteador\").first().json;\nconst text = Repdrive.finalizeReply($input.first().json.output);\nreturn [{ json: { send: { ...r.send, body: { ...r.send.body, text } } } }];"
       }
     },
     {
-      "id": "repdrive-20",
+      "id": "repdrive-26",
       "name": "Enviar WhatsApp",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        1680,
+        2880,
         300
       ],
       "parameters": {
@@ -1229,7 +1407,7 @@
       }
     },
     {
-      "id": "repdrive-21",
+      "id": "repdrive-27",
       "name": "Ferramentas (chamadas pela IA)",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
@@ -1272,7 +1450,7 @@
       }
     },
     {
-      "id": "repdrive-22",
+      "id": "repdrive-28",
       "name": "Consultar dados",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1298,6 +1476,86 @@
       ]
     },
     "Chave da sessão": {
+      "main": [
+        [
+          {
+            "node": "É áudio?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É áudio?": {
+      "main": [
+        [
+          {
+            "node": "Áudio veio no webhook?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ler sessão (Redis)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Áudio veio no webhook?": {
+      "main": [
+        [
+          {
+            "node": "Preparar áudio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Baixar áudio (Evolution)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar áudio (Evolution)": {
+      "main": [
+        [
+          {
+            "node": "Preparar áudio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar áudio": {
+      "main": [
+        [
+          {
+            "node": "Transcrever (Groq Whisper)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcrever (Groq Whisper)": {
+      "main": [
+        [
+          {
+            "node": "Injetar transcrição",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Injetar transcrição": {
       "main": [
         [
           {

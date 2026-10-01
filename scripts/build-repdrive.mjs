@@ -16,6 +16,8 @@ const USE_AI = (process.env.REPDRIVE_USE_AI ?? "1") === "1"
 const PROVIDER = process.env.REPDRIVE_PROVIDER ?? "anthropic"
 const MODEL = process.env.REPDRIVE_MODEL ?? (PROVIDER === "anthropic" ? "claude-haiku-4-5-20251001" : "gpt-4o-mini")
 const ANTHROPIC_CREDENTIAL = { id: process.env.REPDRIVE_ANTHROPIC_CREDENTIAL_ID ?? "uNhdE7wr66UeKdh9", name: "Anthropic RepDrive" }
+// Transcrição de áudio (Whisper no Groq) — credencial header "Authorization: Bearer gsk_..."
+const GROQ_CREDENTIAL = { id: process.env.REPDRIVE_GROQ_CREDENTIAL_ID ?? "BtVwcc4Z487N8TVC", name: "Groq Whisper" }
 const OPENAI_CREDENTIAL_ID = process.env.REPDRIVE_OPENAI_CREDENTIAL_ID ?? "quyUfoekmfCT3E4Y"
 // Redis guarda a sessão de cada lead (uma chave por lead) e a memória da conversa
 const REDIS_CREDENTIAL = { id: process.env.REPDRIVE_REDIS_CREDENTIAL_ID ?? "6ppBIFF5AgjwEA5F", name: "Redis account" }
@@ -63,7 +65,8 @@ ${entradaJs}
 
 // A sessão do lead vem do Redis (nó anterior); só dedupe e grupos ativados ficam no static data.
 // o nó do Redis devolve só { session }; mensagem e chave vêm do nó "Chave da sessão"
-const inp = { ...$("Chave da sessão").first().json, session: $input.first().json.session };
+const src = $("Injetar transcrição").isExecuted ? $("Injetar transcrição").first().json : $("Chave da sessão").first().json;
+const inp = { ...src, session: $input.first().json.session };
 const state = $getWorkflowStaticData("global");
 const work = { seen: state.seen, demoGroups: state.demoGroups, sessions: {} };
 if (inp.session) {
@@ -85,7 +88,22 @@ return [{ json: { ...out, sessionKey: inp.sessionKey, sessionJson: session ? JSO
 const chaveCode = `${entradaJs}
 
 const body = $input.first().json.body ?? {};
-return [{ json: { body, sessionKey: Repdrive.sessionKeyOf(body) ?? "sem-chave" } }];`
+return [{ json: { body, sessionKey: Repdrive.sessionKeyOf(body) ?? "sem-chave", audio: Repdrive.audioOf(body) } }];`
+
+const prepararAudioCode = `const c = $("Chave da sessão").first().json;
+const baixado = $input.first().json;
+const b64 = c.audio.base64 || baixado.base64;
+if (!b64) return [{ json: { semAudio: true } }];
+const ext = (c.audio.mimetype.split("/")[1] || "ogg").replace("mpeg", "mp3");
+return [{ json: {}, binary: { audio: { data: b64, mimeType: c.audio.mimetype, fileName: "audio." + ext } } }];`
+
+const injetarCode = `${entradaJs}
+
+// Troca o áudio pelo texto transcrito; sem transcrição, segue como áudio (o Roteador pede para digitar).
+const c = $("Chave da sessão").first().json;
+const text = String($input.first().json.text ?? "").trim();
+if (!text) return [{ json: c }];
+return [{ json: { ...c, body: Repdrive.withTranscription(c.body, text) } }];`
 
 const montarCode = `${entradaJs}
 
@@ -113,22 +131,93 @@ webhook.webhookId = "repdrive-evolution"
 
 const chave = node("Chave da sessão", "n8n-nodes-base.code", 2, [200, 300], { jsCode: chaveCode })
 
+const ehAudio = node("É áudio?", "n8n-nodes-base.if", 2.3, [400, 300], {
+  conditions: {
+    options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 3 },
+    conditions: [
+      { id: "cond-audio", leftValue: "={{ !!$json.audio }}", rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
+    ],
+    combinator: "and",
+  },
+  looseTypeValidation: true,
+  options: {},
+})
+
+const temAudio = node("Áudio veio no webhook?", "n8n-nodes-base.if", 2.3, [600, 560], {
+  conditions: {
+    options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 3 },
+    conditions: [
+      { id: "cond-b64", leftValue: "={{ !!$json.audio.base64 }}", rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
+    ],
+    combinator: "and",
+  },
+  looseTypeValidation: true,
+  options: {},
+})
+
+const baixarAudio = node(
+  "Baixar áudio (Evolution)",
+  "n8n-nodes-base.httpRequest",
+  4.4,
+  [800, 680],
+  {
+    method: "POST",
+    url: '={{ String($json.body.server_url || "").replace(/\\/+$/, "") + "/chat/getBase64FromMediaMessage/" + $json.body.instance }}',
+    sendHeaders: true,
+    headerParameters: { parameters: [{ name: "apikey", value: "={{ $json.body.apikey }}" }] },
+    sendBody: true,
+    specifyBody: "json",
+    jsonBody: "={{ JSON.stringify({ message: { key: { id: $json.audio.messageId } }, convertToMp4: false }) }}",
+    options: { timeout: 20000 },
+  },
+  { onError: "continueRegularOutput" },
+)
+
+const prepararAudio = node("Preparar áudio", "n8n-nodes-base.code", 2, [1000, 560], { jsCode: prepararAudioCode })
+
+const transcrever = node(
+  "Transcrever (Groq Whisper)",
+  "n8n-nodes-base.httpRequest",
+  4.4,
+  [1200, 560],
+  {
+    method: "POST",
+    url: "https://api.groq.com/openai/v1/audio/transcriptions",
+    authentication: "genericCredentialType",
+    genericAuthType: "httpHeaderAuth",
+    sendBody: true,
+    contentType: "multipart-form-data",
+    bodyParameters: {
+      parameters: [
+        { parameterType: "formBinaryData", name: "file", inputDataFieldName: "audio" },
+        { parameterType: "formData", name: "model", value: "whisper-large-v3-turbo" },
+        { parameterType: "formData", name: "language", value: "pt" },
+        { parameterType: "formData", name: "response_format", value: "json" },
+      ],
+    },
+    options: { timeout: 30000 },
+  },
+  { onError: "continueRegularOutput", credentials: { httpHeaderAuth: GROQ_CREDENTIAL } },
+)
+
+const injetar = node("Injetar transcrição", "n8n-nodes-base.code", 2, [1400, 560], { jsCode: injetarCode })
+
 const lerSessao = node(
   "Ler sessão (Redis)",
   "n8n-nodes-base.redis",
   1,
-  [400, 300],
+  [1600, 300],
   { operation: "get", propertyName: "session", key: "=repdrive:sessao:{{ $json.sessionKey }}", keyType: "automatic", options: {} },
   { credentials: { redis: REDIS_CREDENTIAL } },
 )
 
-const roteador = node("Roteador", "n8n-nodes-base.code", 2, [600, 300], { jsCode: roteadorCode })
+const roteador = node("Roteador", "n8n-nodes-base.code", 2, [1800, 300], { jsCode: roteadorCode })
 
 const gravarSessao = node(
   "Gravar sessão (Redis)",
   "n8n-nodes-base.redis",
   1,
-  [820, 100],
+  [2020, 100],
   {
     operation: "set",
     key: "=repdrive:sessao:{{ $json.sessionKey }}",
@@ -140,7 +229,7 @@ const gravarSessao = node(
   { credentials: { redis: REDIS_CREDENTIAL } },
 )
 
-const ifAgent = node("Precisa da IA?", "n8n-nodes-base.if", 2.3, [820, 300], {
+const ifAgent = node("Precisa da IA?", "n8n-nodes-base.if", 2.3, [2020, 300], {
   conditions: {
     options: { caseSensitive: true, leftValue: "", typeValidation: "strict", version: 3 },
     conditions: [
@@ -160,7 +249,7 @@ const agent = node(
   "Agente Repdrive",
   "@n8n/n8n-nodes-langchain.agent",
   3.1,
-  [1060, 160],
+  [2260, 160],
   {
     promptType: "define",
     text: "={{ $json.chatInput }}",
@@ -177,7 +266,7 @@ if (typeof ai === "string" && ai.trim()) return [{ json: { output: ai } }];
 const r = $("Roteador").first().json;
 return [{ json: { output: Repdrive.responderSemIA(r.persona, r.chatInput) } }];`
 
-const semIa = node("Responder com dados AlphaLog", "n8n-nodes-base.code", 2, [1260, 160], { jsCode: semIaCode })
+const semIa = node("Responder com dados AlphaLog", "n8n-nodes-base.code", 2, [2460, 160], { jsCode: semIaCode })
 
 const model =
   PROVIDER === "anthropic"
@@ -185,7 +274,7 @@ const model =
         "Claude (Anthropic)",
         "@n8n/n8n-nodes-langchain.lmChatAnthropic",
         1.3,
-        [960, 440],
+        [2160, 440],
         { model: { __rl: true, mode: "id", value: MODEL }, options: { maxTokensToSample: 1024, temperature: 0.2 } },
         { credentials: { anthropicApi: ANTHROPIC_CREDENTIAL }, ...(USE_AI ? {} : { disabled: true }) },
       )
@@ -193,7 +282,7 @@ const model =
         "Modelo IA",
         "@n8n/n8n-nodes-langchain.lmChatOpenAi",
         1.3,
-        [960, 440],
+        [2160, 440],
         { model: { __rl: true, mode: "id", value: MODEL }, options: { maxTokens: 1024, temperature: 0.2 } },
         OPENAI_CREDENTIAL_ID ? { credentials: { openAiApi: { id: OPENAI_CREDENTIAL_ID, name: "OpenAI account" } } } : {},
       )
@@ -202,7 +291,7 @@ const memory = node(
   "Memória da conversa (Redis)",
   "@n8n/n8n-nodes-langchain.memoryRedisChat",
   1.6,
-  [1120, 440],
+  [2320, 440],
   {
     sessionIdType: "customKey",
     sessionKey: '={{ "repdrive:chat:" + $("Roteador").first().json.memoryKey }}',
@@ -225,7 +314,7 @@ const tools = toolDefs.map((t, idx) => {
     t.name,
     "@n8n/n8n-nodes-langchain.toolWorkflow",
     2.2,
-    [1280 + (idx % 4) * 160, 440 + Math.floor(idx / 4) * 160],
+    [2480 + (idx % 4) * 160, 440 + Math.floor(idx / 4) * 160],
     {
       description: `${t.description} (perfis: ${t.roles.join(", ")})`,
       workflowId: { __rl: true, mode: "id", value: "={{ $workflow.id }}" },
@@ -250,9 +339,9 @@ const tools = toolDefs.map((t, idx) => {
   )
 })
 
-const montar = node("Montar resposta", "n8n-nodes-base.code", 2, [1460, 160], { jsCode: montarCode })
+const montar = node("Montar resposta", "n8n-nodes-base.code", 2, [2660, 160], { jsCode: montarCode })
 
-const enviar = node("Enviar WhatsApp", "n8n-nodes-base.httpRequest", 4.4, [1680, 300], {
+const enviar = node("Enviar WhatsApp", "n8n-nodes-base.httpRequest", 4.4, [2880, 300], {
   method: "POST",
   url: "={{ $json.send.url }}",
   sendHeaders: true,
@@ -286,11 +375,27 @@ const sticky = node("Leia-me", "n8n-nodes-base.stickyNote", 1, [-40, -120], {
   ].join("\n"),
 })
 
-const nodes = [sticky, webhook, chave, lerSessao, roteador, gravarSessao, ifAgent, semIa, agent, model, memory, ...tools, montar, enviar, trigger, consulta]
+const nodes = [sticky, webhook, chave, ehAudio, temAudio, baixarAudio, prepararAudio, transcrever, injetar, lerSessao, roteador, gravarSessao, ifAgent, semIa, agent, model, memory, ...tools, montar, enviar, trigger, consulta]
 
 const connections = {
   [webhook.name]: { main: [[{ node: chave.name, type: "main", index: 0 }]] },
-  [chave.name]: { main: [[{ node: lerSessao.name, type: "main", index: 0 }]] },
+  [chave.name]: { main: [[{ node: ehAudio.name, type: "main", index: 0 }]] },
+  [ehAudio.name]: {
+    main: [
+      [{ node: temAudio.name, type: "main", index: 0 }],
+      [{ node: lerSessao.name, type: "main", index: 0 }],
+    ],
+  },
+  [temAudio.name]: {
+    main: [
+      [{ node: prepararAudio.name, type: "main", index: 0 }],
+      [{ node: baixarAudio.name, type: "main", index: 0 }],
+    ],
+  },
+  [baixarAudio.name]: { main: [[{ node: prepararAudio.name, type: "main", index: 0 }]] },
+  [prepararAudio.name]: { main: [[{ node: transcrever.name, type: "main", index: 0 }]] },
+  [transcrever.name]: { main: [[{ node: injetar.name, type: "main", index: 0 }]] },
+  [injetar.name]: { main: [[{ node: lerSessao.name, type: "main", index: 0 }]] },
   [lerSessao.name]: { main: [[{ node: roteador.name, type: "main", index: 0 }]] },
   [roteador.name]: {
     main: [

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { consultar, responderSemIA } from "../entries/consulta"
-import { handleWebhook, type EntradaState } from "../entries/entrada"
+import { audioOf, handleWebhook, withTranscription, type EntradaState } from "../entries/entrada"
 import { finalizeReply, routeDemoMessage, SESSION_TIMEOUT_MS } from "../demo/router"
 
 const GROUP = "120363000000000000@g.us"
@@ -151,5 +151,30 @@ describe("Repdrive — webhook da Evolution", () => {
     expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)?.action).toBe("send")
     handleWebhook(webhook("/repdrive-desativar", { jid: "novo@g.us" }), state, empty)
     expect(handleWebhook(webhook("oi", { jid: "novo@g.us" }), state, empty)).toBeNull()
+  })
+})
+
+describe("Repdrive — áudio", () => {
+  const audioBody = (base64?: string) => ({
+    event: "messages.upsert",
+    instance: "alphadata",
+    data: {
+      key: { remoteJid: GROUP, fromMe: false, id: `AUD${msgId++}`, participant: "5541900000009@s.whatsapp.net" },
+      message: { audioMessage: { mimetype: "audio/ogg; codecs=opus", seconds: 3 }, ...(base64 ? { base64 } : {}) },
+    },
+  })
+
+  it("detecta áudio e normaliza o mimetype", () => {
+    expect(audioOf(audioBody("QUJD"))).toMatchObject({ mimetype: "audio/ogg", base64: "QUJD", seconds: 3 })
+    expect(audioOf(audioBody())?.base64).toBeUndefined()
+    expect(audioOf(webhook("oi"))).toBeNull()
+  })
+
+  it("a transcrição segue o fluxo como texto, inclusive opções faladas do menu", () => {
+    const state: EntradaState = {}
+    const escolha = handleWebhook(withTranscription(audioBody(), "Três."), state, config)
+    expect(escolha?.send.body.text).toContain("Modo Cliente ativado")
+    const pergunta = handleWebhook(withTranscription(audioBody(), "Quando chega a minha carga 1014?"), state, config)
+    expect(pergunta?.action === "agent" && pergunta.chatInput).toBe("Quando chega a minha carga 1014?")
   })
 })
