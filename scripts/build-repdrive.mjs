@@ -10,11 +10,12 @@ const outDir = path.join(root, "n8n")
 /** Grupos de demonstração e override da URL da Evolution — editáveis também direto no nó Roteador. */
 const DEMO_GROUP_JIDS = (process.env.REPDRIVE_GROUP_JIDS ?? "120363412777463012@g.us").split(",").map((s) => s.trim()).filter(Boolean)
 const EVOLUTION_URL = process.env.REPDRIVE_EVOLUTION_URL ?? ""
-// REPDRIVE_USE_AI=1 liga o agente de IA; sem isso a demo responde por regras com os dados do AlphaLog
-const USE_AI = process.env.REPDRIVE_USE_AI === "1"
+// Agente de IA ligado por padrão; REPDRIVE_USE_AI=0 volta a responder só por regras com os dados do AlphaLog
+const USE_AI = (process.env.REPDRIVE_USE_AI ?? "1") === "1"
 // anthropic (padrão, claude-haiku-4-5-20251001 — conectar a credencial depois) ou openai ("OpenAI account")
 const PROVIDER = process.env.REPDRIVE_PROVIDER ?? "anthropic"
 const MODEL = process.env.REPDRIVE_MODEL ?? (PROVIDER === "anthropic" ? "claude-haiku-4-5-20251001" : "gpt-4o-mini")
+const ANTHROPIC_CREDENTIAL = { id: process.env.REPDRIVE_ANTHROPIC_CREDENTIAL_ID ?? "uNhdE7wr66UeKdh9", name: "Anthropic RepDrive" }
 const OPENAI_CREDENTIAL_ID = process.env.REPDRIVE_OPENAI_CREDENTIAL_ID ?? "quyUfoekmfCT3E4Y"
 // Redis guarda a sessão de cada lead (uma chave por lead) e a memória da conversa
 const REDIS_CREDENTIAL = { id: process.env.REPDRIVE_REDIS_CREDENTIAL_ID ?? "6ppBIFF5AgjwEA5F", name: "Redis account" }
@@ -170,10 +171,13 @@ const agent = node(
 
 const semIaCode = `${consultaJs}
 
+// Com IA ligada, só entra em ação se o agente falhar (sem crédito, fora do ar, resposta vazia).
+const ai = $input.first().json.output;
+if (typeof ai === "string" && ai.trim()) return [{ json: { output: ai } }];
 const r = $("Roteador").first().json;
 return [{ json: { output: Repdrive.responderSemIA(r.persona, r.chatInput) } }];`
 
-const semIa = node("Responder com dados AlphaLog", "n8n-nodes-base.code", 2, [1060, 300], { jsCode: semIaCode })
+const semIa = node("Responder com dados AlphaLog", "n8n-nodes-base.code", 2, [1260, 160], { jsCode: semIaCode })
 
 const model =
   PROVIDER === "anthropic"
@@ -183,7 +187,7 @@ const model =
         1.3,
         [960, 440],
         { model: { __rl: true, mode: "id", value: MODEL }, options: { maxTokensToSample: 1024, temperature: 0.2 } },
-        USE_AI ? {} : { disabled: true },
+        { credentials: { anthropicApi: ANTHROPIC_CREDENTIAL }, ...(USE_AI ? {} : { disabled: true }) },
       )
     : node(
         "Modelo IA",
@@ -246,7 +250,7 @@ const tools = toolDefs.map((t, idx) => {
   )
 })
 
-const montar = node("Montar resposta", "n8n-nodes-base.code", 2, [1440, 160], { jsCode: montarCode })
+const montar = node("Montar resposta", "n8n-nodes-base.code", 2, [1460, 160], { jsCode: montarCode })
 
 const enviar = node("Enviar WhatsApp", "n8n-nodes-base.httpRequest", 4.4, [1680, 300], {
   method: "POST",
@@ -272,7 +276,7 @@ const sticky = node("Leia-me", "n8n-nodes-base.stickyNote", 1, [-40, -120], {
   height: 380,
   content: [
     "## Repdrive — demo no grupo do WhatsApp",
-    "1. Hoje as respostas saem de **Responder com dados AlphaLog** (regras, sem custo de IA). Para ligar a IA: crie a credencial Anthropic, selecione-a no nó **Claude (Anthropic)**, reative ele e o **Agente Repdrive** e ligue a saída *true* de **Precisa da IA?** ao agente (ou gere com REPDRIVE_USE_AI=1).",
+    "1. Perguntas vão para o **Agente Repdrive** (Claude Haiku 4.5, credencial *Anthropic RepDrive*). Se a IA falhar, **Responder com dados AlphaLog** responde por regras. Só regras, sem IA: gere com REPDRIVE_USE_AI=0.",
     "2. Publique o workflow e copie a *Production URL* do nó **Webhook Evolution**.",
     "3. Na Evolution (instância), configure o Webhook com essa URL e o evento **MESSAGES_UPSERT**.",
     "4. O grupo Repdrive já vem configurado em `DEMO_GROUP_JIDS` (nó **Roteador**). Outros grupos: `/repdrive-ativar`.",
@@ -303,7 +307,7 @@ const connections = {
       [{ node: enviar.name, type: "main", index: 0 }],
     ],
   },
-  [agent.name]: { main: [[{ node: montar.name, type: "main", index: 0 }]] },
+  [agent.name]: { main: [[{ node: semIa.name, type: "main", index: 0 }]] },
   [semIa.name]: { main: [[{ node: montar.name, type: "main", index: 0 }]] },
   [montar.name]: { main: [[{ node: enviar.name, type: "main", index: 0 }]] },
   [model.name]: { ai_languageModel: [[{ node: agent.name, type: "ai_languageModel", index: 0 }]] },
