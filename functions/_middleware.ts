@@ -21,6 +21,8 @@ const LANDING_PATHS = new Set([
   "/repdrive-nome.png",
   "/repdrive-logo.png",
   "/iphone-frame.webp",
+  "/hero-bg.webp",
+  "/hero-bg-900.webp",
   "/privacidade",
   "/robots.txt",
   "/sitemap.xml",
