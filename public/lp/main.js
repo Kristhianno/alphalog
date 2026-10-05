@@ -1,18 +1,18 @@
 // ===== Links do WhatsApp: troque só aqui =====
 
-// Número comercial do Repdrive (só dígitos, com 55 + DDD).
+// Número comercial do RepDrive (só dígitos, com 55 + DDD).
 const WHATSAPP_NUMBER = "554191497748"
-const WHATSAPP_TEXT = "Olá! Quero falar com um especialista do Repdrive."
+const WHATSAPP_TEXT = "Olá! Quero falar com um especialista do RepDrive."
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_TEXT)}`
 
-// Convite do grupo de demonstração "Repdrive" (a demo começa pelo grupo e segue no privado).
+// Convite do grupo de demonstração "RepDrive" (a demo começa pelo grupo e segue no privado).
 // Enquanto estiver vazio, os botões "Testar grátis" abrem a conversa no WHATSAPP_URL.
 const DEMO_URL = "https://chat.whatsapp.com/LVKw3kd8ohD2I0ub8MnlES"
 
 // =============================================
 
 const links = {
-  demo: DEMO_URL || `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Quero testar o Repdrive")}`,
+  demo: DEMO_URL || `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Quero testar o RepDrive")}`,
   contato: WHATSAPP_URL,
 }
 

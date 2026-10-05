@@ -222,7 +222,7 @@ p { margin: 0; }
   .compare tbody th { grid-column: 1 / -1; width: auto; padding-bottom: 4px; border: 0; font-size: .85rem; text-transform: uppercase; letter-spacing: .06em; }
   .compare td { border: 0; padding-top: 6px; }
   .compare td::before { display: block; font-size: .75rem; font-weight: 700; color: var(--muted); margin-bottom: 2px; }
-  .compare td.is-us::before { content: "Repdrive"; color: var(--steel); }
+  .compare td.is-us::before { content: "RepDrive"; color: var(--steel); }
   .compare td:not(.is-us)::before { content: "Atendente"; }
 }
 
