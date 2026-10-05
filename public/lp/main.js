@@ -25,23 +25,25 @@ for (const a of document.querySelectorAll("[data-cta]")) {
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
-// Conversa do hero: mensagens aparecem uma a uma e o ciclo recomeça
+// Conversa do hero: mensagens aparecem uma a uma (duas perguntas e duas respostas) e o ciclo recomeça
 const chat = document.getElementById("hero-chat")
 if (chat && !reduceMotion) {
   const steps = [...chat.querySelectorAll("[data-step]")]
-  const [question, typing, answer] = steps
   const wait = (ms) => new Promise((r) => setTimeout(r, ms))
   const loop = async () => {
     for (;;) {
       steps.forEach((s) => s.classList.remove("is-on"))
       await wait(700)
-      question.classList.add("is-on")
-      await wait(1100)
-      typing.classList.add("is-on")
-      await wait(1600)
-      typing.classList.remove("is-on")
-      answer.classList.add("is-on")
-      await wait(7000)
+      for (const step of steps) {
+        step.classList.add("is-on")
+        if (step.classList.contains("typing")) {
+          await wait(1500)
+          step.classList.remove("is-on")
+        } else {
+          await wait(step.classList.contains("bubble--in") ? 2200 : 1000)
+        }
+      }
+      await wait(6000)
     }
   }
   loop()

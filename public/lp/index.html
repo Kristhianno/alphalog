@@ -60,16 +60,19 @@
           </div>
         </div>
 
-        <div class="phone" role="img" aria-label="Exemplo de conversa no WhatsApp: o cliente pergunta quando chega a carga 1014 e o RepDrive responde que ela saiu para entrega às 8h20 com o motorista João, com previsão de entrega hoje entre 14h e 15h.">
+        <div class="phone" role="img" aria-label="Exemplo de conversa no WhatsApp: o cliente pergunta quando chega a carga 1014 e o RepDrive responde que ela saiu para entrega às 8h20 com o motorista João, com previsão para hoje entre 14h e 15h. Depois o cliente manda um áudio perguntando da carga 1022 e o RepDrive responde que a coleta está marcada para amanhã às 9h, com o motorista Carlos.">
           <div class="chat" aria-hidden="true">
             <div class="chat__head">
               <span class="chat__avatar"><img src="/favicon.png" alt="" width="36" height="36" /></span>
               <span><strong>Sua Transportadora</strong><small>online</small></span>
             </div>
             <div class="chat__body" id="hero-chat">
-              <div class="bubble bubble--out" data-step="1">Quando chega a carga 1014?<time>14:02</time></div>
-              <div class="typing" data-step="2"><i></i><i></i><i></i></div>
-              <div class="bubble bubble--in" data-step="3">A carga 1014 saiu para entrega às 8h20 com o motorista João. Previsão de entrega: <b>hoje, entre 14h e 15h.</b><time>14:02</time></div>
+              <div class="bubble bubble--out" data-step>Quando chega a carga 1014?<time>14:02</time></div>
+              <div class="typing" data-step><i></i><i></i><i></i></div>
+              <div class="bubble bubble--in" data-step>A carga 1014 saiu para entrega às 8h20 com o motorista João. Previsão: <b>hoje, entre 14h e 15h.</b><time>14:02</time></div>
+              <div class="bubble bubble--out bubble--audio" data-step><svg class="audio__play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg><svg class="audio__wave" viewBox="0 0 96 18" preserveAspectRatio="none"><rect x="0" y="6.0" width="2" height="6" rx="1"/><rect x="4" y="5.0" width="2" height="8" rx="1"/><rect x="8" y="7.0" width="2" height="4" rx="1"/><rect x="12" y="2.0" width="2" height="14" rx="1"/><rect x="16" y="4.0" width="2" height="10" rx="1"/><rect x="20" y="4.0" width="2" height="10" rx="1"/><rect x="24" y="6.0" width="2" height="6" rx="1"/><rect x="28" y="7.0" width="2" height="4" rx="1"/><rect x="32" y="7.0" width="2" height="4" rx="1"/><rect x="36" y="7.0" width="2" height="4" rx="1"/><rect x="40" y="4.0" width="2" height="10" rx="1"/><rect x="44" y="3.0" width="2" height="12" rx="1"/><rect x="48" y="5.0" width="2" height="8" rx="1"/><rect x="52" y="1.0" width="2" height="16" rx="1"/><rect x="56" y="1.0" width="2" height="16" rx="1"/><rect x="60" y="7.0" width="2" height="4" rx="1"/><rect x="64" y="6.0" width="2" height="6" rx="1"/><rect x="68" y="3.0" width="2" height="12" rx="1"/><rect x="72" y="3.0" width="2" height="12" rx="1"/><rect x="76" y="5.0" width="2" height="8" rx="1"/><rect x="80" y="5.0" width="2" height="8" rx="1"/><rect x="84" y="1.0" width="2" height="16" rx="1"/><rect x="88" y="6.0" width="2" height="6" rx="1"/><rect x="92" y="1.0" width="2" height="16" rx="1"/></svg><span class="audio__len">0:06</span><time>14:03</time></div>
+              <div class="typing" data-step><i></i><i></i><i></i></div>
+              <div class="bubble bubble--in" data-step>Ouvi seu áudio 👍 A carga 1022 tem coleta marcada para <b>amanhã, às 9h.</b> Motorista: Carlos.<time>14:03</time></div>
             </div>
           </div>
           <img class="phone__frame" src="/iphone-frame.webp" alt="" width="680" height="1280" />
@@ -188,6 +191,32 @@
       </div>
     </section>
 
+    <!-- Segurança -->
+    <section class="section dark" id="seguranca">
+      <div class="wrap">
+        <p class="eyebrow reveal">Segurança</p>
+        <h2 class="reveal">Seus dados protegidos. Seu número também.</h2>
+        <p class="sub reveal">O RepDrive foi feito para conversar com cliente e motorista sem abrir a sua operação para quem não deve ver.</p>
+
+        <div class="number-box reveal">
+          <svg class="ico ico--xl" aria-hidden="true"><use href="#i-shield"/></svg>
+          <div>
+            <h3>Sem risco de perder o seu número</h3>
+            <p>O RepDrive funciona pela <strong>API oficial do WhatsApp Business, da Meta</strong>, a mesma usada por bancos e grandes empresas. Nada de aplicativo paralelo ou gambiarra que leva a bloqueio. O número é verificado e continua sendo da sua transportadora.</p>
+          </div>
+        </div>
+
+        <div class="grid grid--3 sec-grid">
+          <article class="sec reveal"><svg class="ico ico--lg" aria-hidden="true"><use href="#i-eye"/></svg><h3>Só consulta, nunca altera</h3><p>O RepDrive lê os dados para responder. Ele não muda, apaga nem cria nada no seu sistema.</p></article>
+          <article class="sec reveal"><svg class="ico ico--lg" aria-hidden="true"><use href="#i-lock"/></svg><h3>Cada um só vê o que é dele</h3><p>Cliente vê só as próprias cargas. Motorista, só as próprias corridas. Faturamento, custos e fretes ficam só para o gestor.</p></article>
+          <article class="sec reveal"><svg class="ico ico--lg" aria-hidden="true"><use href="#i-id"/></svg><h3>Reconhece pelo número cadastrado</h3><p>Quem está falando é identificado pelo telefone cadastrado, não pelo que a pessoa escreve. Ninguém vira gestor só digitando “sou o dono”.</p></article>
+          <article class="sec reveal"><svg class="ico ico--lg" aria-hidden="true"><use href="#i-rules"/></svg><h3>Regras fixas, não a critério da IA</h3><p>Quem pode ver o quê é definido nas regras do sistema. A inteligência artificial só escreve a resposta com o que essas regras liberam.</p></article>
+          <article class="sec reveal"><svg class="ico ico--lg" aria-hidden="true"><use href="#i-db"/></svg><h3>Não inventa informação</h3><p>Responde só com os dados da sua operação. Se não encontrar, avisa em vez de chutar.</p></article>
+          <article class="sec reveal"><svg class="ico ico--lg" aria-hidden="true"><use href="#i-key"/></svg><h3>Conexão protegida</h3><p>Os dados trafegam criptografados entre o seu sistema, o RepDrive e o WhatsApp.</p></article>
+        </div>
+      </div>
+    </section>
+
     <!-- 4.7 Comparação -->
     <section class="section white">
       <div class="wrap wrap--narrow">
@@ -261,6 +290,8 @@
           <details><summary>Um cliente consegue ver a carga de outro?</summary><p>Não. Cada cliente só vê as próprias cargas, e cada motorista só vê as próprias corridas.</p></details>
           <details><summary>Ele entende áudio?</summary><p>Sim. Seu cliente ou motorista pode mandar áudio que o RepDrive entende e responde.</p></details>
           <details><summary>Quanto tempo leva para começar?</summary><p>De 7 a 15 dias depois da contratação.</p></details>
+          <details><summary>Corro o risco de perder o meu número de WhatsApp?</summary><p>Não por causa do RepDrive. Ele funciona pela API oficial do WhatsApp Business, da Meta, com número verificado, a mesma usada por bancos e grandes empresas. O número continua sendo da sua transportadora.</p></details>
+          <details><summary>Meus dados ficam seguros?</summary><p>Sim. O RepDrive só consulta os dados para responder, não altera nada no seu sistema. Cada pessoa é reconhecida pelo número cadastrado e só vê o que é dela, e a conexão é criptografada.</p></details>
           <details><summary>Tem fidelidade?</summary><p>O contrato mínimo é de 6 meses.</p></details>
         </div>
       </div>
@@ -302,6 +333,11 @@
     <symbol id="i-wa" viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2a9.9 9.9 0 0 0-8.5 15l-1.4 5 5.2-1.36A9.9 9.9 0 1 0 12.04 2Zm0 18.1a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.08.81.82-3-.2-.31a8.2 8.2 0 1 1 6.94 3.83Zm4.5-6.14c-.25-.12-1.46-.72-1.69-.8-.23-.08-.39-.12-.55.12-.16.25-.63.8-.78.97-.14.16-.29.18-.53.06a6.7 6.7 0 0 1-3.32-2.9c-.25-.43.25-.4.72-1.33.08-.16.04-.3-.02-.43-.06-.12-.55-1.32-.75-1.81-.2-.48-.4-.41-.55-.42h-.47a.9.9 0 0 0-.65.3 2.74 2.74 0 0 0-.86 2.04 4.76 4.76 0 0 0 1 2.53 10.9 10.9 0 0 0 4.18 3.69c1.55.67 2.16.73 2.94.61.47-.07 1.46-.6 1.66-1.17.2-.58.2-1.07.15-1.17-.06-.1-.22-.17-.47-.29Z"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
     <symbol id="i-mic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-id" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/><circle cx="12" cy="9" r="2.5"/><path d="M8.5 14.5a4 4 0 0 1 7 0"/></symbol>
+    <symbol id="i-rules" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.3-9.3M17 6l3 3M14 9l2 2"/></symbol>
     <symbol id="i-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
     <symbol id="i-box" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v8"/></symbol>
     <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></symbol>

@@ -305,3 +305,27 @@ p { margin: 0; }
 .price .checks li::before { background-color: var(--navy); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FFFFFF' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E"); }
 .footer__brand { display: inline-flex; align-items: center; gap: 14px; }
 .footer__brand img { height: 20px; width: auto; opacity: .9; }
+
+/* Conversa do hero: bolha de áudio */
+.bubble--audio { display: flex; align-items: center; gap: 8px; min-width: 62%; padding-right: 14px; }
+.audio__play { width: 18px; height: 18px; color: #54656f; flex: none; }
+.audio__wave { flex: 1; height: 18px; min-width: 80px; fill: #7a8a94; }
+.audio__len { font-size: .72rem; color: #667781; }
+
+/* Segurança */
+.number-box {
+  display: flex; gap: 20px; align-items: flex-start;
+  background: var(--white); color: var(--ink); border-radius: 20px; padding: 26px 24px; margin-bottom: 8px;
+  box-shadow: 0 24px 50px rgba(0,0,0,.3);
+}
+.number-box h3 { font-size: 1.35rem; margin-bottom: 8px; }
+.number-box p { color: var(--muted); }
+.number-box strong { color: var(--ink); }
+.number-box .ico { color: var(--wa); }
+.ico--xl { width: 44px; height: 44px; }
+@media (max-width: 560px) { .number-box { flex-direction: column; gap: 12px; } }
+.sec-grid { margin-top: 24px; }
+.sec { background: var(--navy-2); border: 1px solid rgba(255,255,255,.08); border-radius: var(--radius); padding: 24px; }
+.sec .ico { color: var(--sky); margin-bottom: 14px; }
+.sec h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.sec p { color: #c3cde0; font-size: .98rem; }
