@@ -23,6 +23,7 @@ const LANDING_PATHS = new Set([
   "/iphone-frame.webp",
   "/hero-bg.webp",
   "/hero-bg-900.webp",
+  "/alphadata-logo.webp",
   "/privacidade",
   "/robots.txt",
   "/sitemap.xml",

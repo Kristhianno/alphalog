@@ -32,12 +32,25 @@
   <!-- 4.1 Cabeçalho fixo -->
   <header class="topbar">
     <div class="wrap topbar__inner">
-      <a href="#topo" class="logo" aria-label="RepDrive, início">
-        <img class="logo__img" src="/repdrive-nome.png" alt="RepDrive" width="480" height="88" />
+      <a href="#topo" class="logo" aria-label="RepDrive, by AlphaData. Ir para o início">
+        <img class="logo__img" src="/repdrive-nome.png" alt="" width="480" height="88" />
+        <span class="logo__by"><span>by</span><img src="/alphadata-logo.webp" alt="" width="560" height="58" /></span>
       </a>
-      <a class="btn btn--primary btn--sm" data-cta="demo" href="#">
-        <span class="hide-xs">Testar grátis no WhatsApp</span><span class="show-xs">Testar grátis</span>
-      </a>
+      <nav class="menu" id="menu" aria-label="Seções da página">
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#perfis">Perfis</a>
+        <a href="#seguranca">Segurança</a>
+        <a href="#preco">Preço</a>
+        <a href="#faq">Dúvidas</a>
+      </nav>
+      <div class="topbar__actions">
+        <a class="btn btn--primary btn--sm" data-cta="demo" href="#">
+          <span class="hide-xs">Testar grátis no WhatsApp</span><span class="show-xs">Testar grátis</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-controls="menu" aria-expanded="false" aria-label="Abrir menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -115,7 +128,7 @@
     </section>
 
     <!-- 4.5 Perfis -->
-    <section class="section dark">
+    <section class="section dark" id="perfis">
       <div class="wrap">
         <h2 class="reveal">Um atendimento para cada perfil</h2>
         <p class="sub reveal">O RepDrive reconhece quem está falando e responde de acordo.</p>
@@ -315,7 +328,14 @@
   <!-- 4.12 Rodapé -->
   <footer class="footer">
     <div class="wrap footer__inner">
-      <span class="footer__brand"><img src="/repdrive-nome.png" alt="RepDrive" width="480" height="88" loading="lazy" /><span>© 2026</span></span>
+      <div class="footer__brand">
+        <img src="/repdrive-nome.png" alt="RepDrive" width="480" height="88" loading="lazy" />
+        <span>© 2026</span>
+      </div>
+      <a class="footer__maker" href="https://www.alphadata.com.br" target="_blank" rel="noopener">
+        <span>Desenvolvido por</span>
+        <img src="/alphadata-logo.webp" alt="AlphaData" width="560" height="58" loading="lazy" />
+      </a>
       <nav aria-label="Rodapé">
         <a href="/privacidade">Política de privacidade</a>
         <a data-cta="contato" href="#">Contato pelo WhatsApp</a>

@@ -89,3 +89,19 @@ tabs.forEach((tab, i) => {
     next.focus()
   })
 })
+
+// Menu do cabeçalho no celular: abre/fecha e fecha ao escolher uma seção ou apertar Esc
+const menu = document.getElementById("menu")
+const toggle = document.querySelector(".menu-toggle")
+if (menu && toggle) {
+  const setOpen = (open) => {
+    menu.classList.toggle("is-open", open)
+    toggle.setAttribute("aria-expanded", String(open))
+    toggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu")
+  }
+  toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"))
+  menu.addEventListener("click", (e) => { if (e.target.closest("a")) setOpen(false) })
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") { setOpen(false); toggle.focus() }
+  })
+}
