@@ -112,9 +112,21 @@ p { margin: 0; }
     linear-gradient(90deg, rgba(6,19,36,.94) 0%, rgba(6,19,36,.82) 38%, rgba(6,19,36,.45) 68%, rgba(6,19,36,.30) 100%),
     linear-gradient(180deg, rgba(6,19,36,.35) 0%, rgba(6,19,36,0) 30%, rgba(6,19,36,0) 70%, rgba(6,19,36,.55) 100%);
 }
-@media (max-width: 899px) { .hero::before { background: linear-gradient(180deg, rgba(6,19,36,.86) 0%, rgba(6,19,36,.72) 50%, rgba(6,19,36,.45) 100%); } }
+@media (max-width: 699px) { .hero::before { background: linear-gradient(180deg, rgba(6,19,36,.86) 0%, rgba(6,19,36,.72) 50%, rgba(6,19,36,.45) 100%); } }
 .hero__grid { position: relative; display: grid; gap: 48px; align-items: center; }
-@media (min-width: 900px) { .hero { padding: 88px 0 104px; } .hero__grid { grid-template-columns: 1.15fr .85fr; } }
+/* tablet (700px+): texto e celular lado a lado */
+@media (min-width: 700px) {
+  .hero { padding: 64px 0 80px; }
+  .hero__grid { grid-template-columns: minmax(0, 1fr) auto; gap: 32px; }
+  .hero h1 { font-size: clamp(1.9rem, 4.6vw, 3.5rem); }
+  .actions .btn { width: auto; }
+}
+@media (min-width: 700px) and (max-width: 1023px) {
+  .hero .btn--lg { min-height: 52px; padding: 12px 20px; font-size: 1rem; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .actions .btn { width: 100%; }
+}
+@media (min-width: 1024px) { .hero { padding: 88px 0 104px; } .hero__grid { grid-template-columns: 1.15fr .85fr; gap: 48px; } }
 .hero h1 { font-size: clamp(2.05rem, 6vw, 3.5rem); margin-bottom: 20px; }
 .accent { color: var(--sky); }
 .lead { font-size: clamp(1.05rem, 2.4vw, 1.2rem); color: #d3daea; max-width: 56ch; margin-bottom: 32px; }
@@ -126,6 +138,7 @@ p { margin: 0; }
 .phone {
   justify-self: center; position: relative;
   width: min(320px, 82vw); aspect-ratio: 914 / 1720;
+  max-height: calc(100svh - 120px); max-width: calc((100svh - 120px) * 914 / 1720);
   filter: drop-shadow(0 30px 45px rgba(0,0,0,.6)) drop-shadow(0 0 60px rgba(6,19,36,.55));
 }
 .phone__frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
@@ -374,3 +387,4 @@ section[id] { scroll-margin-top: 72px; }
 .footer__maker { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: #9fb0c8; font-size: .85rem; }
 .footer__maker img { height: 14px; width: auto; }
 .footer__maker:hover { text-decoration: none; color: var(--white); }
+@media (min-width: 700px) and (max-width: 1023px) { .phone { width: clamp(230px, 31vw, 300px); } }
