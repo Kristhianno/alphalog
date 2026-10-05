@@ -20,6 +20,7 @@ const LANDING_PATHS = new Set([
   "/apple-touch-icon.png",
   "/repdrive-nome.png",
   "/repdrive-logo.png",
+  "/iphone-frame.webp",
   "/privacidade",
   "/robots.txt",
   "/sitemap.xml",
