@@ -30,6 +30,9 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+        // landing do Repdrive (servida só em www.repdrive.com.br) fica fora do cache do app
+        globIgnores: ['lp/**'],
+        navigateFallbackDenylist: [/^\/lp\//],
       },
     }),
   ],
