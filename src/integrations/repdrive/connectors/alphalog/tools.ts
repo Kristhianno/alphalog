@@ -12,7 +12,7 @@ import type { Connector, RepdriveActor, ToolDef } from "../../core/types"
 import { answerToWhatsApp, bulletList } from "../../core/whatsappFormat"
 import { findVisibleRequest, loadAlphaLog, visibleRequests, type AlphaLogCtx } from "./data"
 import { estimateRequest, formatWhen, isSameDayBR, type Moment } from "./estimate"
-import { VEHICLE_REPORTS, findVehicleReports, formatVehicleReport } from "./vehicleReports"
+import { VEHICLE_REPORTS, findVehicleReports, formatFleetSummary, formatVehicleReport } from "./vehicleReports"
 
 type Tool = ToolDef<AlphaLogCtx>
 
@@ -103,17 +103,22 @@ const tabelaFrete: Tool = {
 
 const relatorioVeiculo: Tool = {
   name: "relatorio_veiculo",
-  description: `Fechamento por veículo (semanal e mensal): corridas, faturamento, km percorrido, combustível, média de consumo (km/l), manutenção e diária do motorista. Veículos com fechamento: ${[...new Set(VEHICLE_REPORTS.map((r) => `${r.vehicle} (${r.plate})`))].join(", ")}. Filtros opcionais.`,
+  description: `Fechamento por veículo (semana de 07/09 a 11/09 e mês de setembro): corridas, faturamento, km percorrido, combustível, média de consumo (km/l), manutenção e diária do motorista. Sem veículo, devolve o resumo da frota com totais (bom para comparar veículos). Veículos: ${[...new Set(VEHICLE_REPORTS.map((r) => `${r.vehicle} (${r.plate})`))].join(", ")}.`,
   roles: STAFF_ROLES,
   params: [
-    { name: "veiculo", type: "string", description: "nome ou placa do veículo, ex.: Fiorino 59 ou MGE9159" },
+    { name: "veiculo", type: "string", description: "nome, placa ou modelo do veículo, ex.: Fiorino 59, SPG5J59 ou Kangoo" },
     { name: "periodo", type: "string", description: "semana | mes" },
   ],
   run: (_ctx, _actor, args) => {
-    const reports = findVehicleReports(args.veiculo as string | undefined, args.periodo as string | undefined)
+    const veiculo = args.veiculo as string | undefined
+    const periodo = args.periodo as string | undefined
+    if (!veiculo) return formatFleetSummary(findVehicleReports(undefined, periodo), periodo)
+    let reports = findVehicleReports(veiculo, periodo)
     if (reports.length === 0) {
       return `Não há fechamento lançado para esse filtro. Veículos com fechamento: ${[...new Set(VEHICLE_REPORTS.map((r) => r.vehicle))].join(", ")}.`
     }
+    // vários veículos sem período escolhido → só o mês, para a resposta caber no WhatsApp
+    if (!periodo && new Set(reports.map((r) => r.plate)).size > 1) reports = reports.filter((r) => r.kind === "mes")
     return reports.map(formatVehicleReport).join("\n\n")
   },
 }

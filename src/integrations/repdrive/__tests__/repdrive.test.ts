@@ -79,9 +79,28 @@ describe("Repdrive — modo sem IA (regras + dados do AlphaLog)", () => {
     expect(semana).toContain("semana de 07/09 a 11/09")
     expect(semana).toContain("918,00")
     expect(semana).toContain("10,38 km/l")
-    expect(consultar("gestor", "relatorio_veiculo", { veiculo: "MGE9159" })).toContain("Corridas: *16*")
+    expect(consultar("gestor", "relatorio_veiculo", { veiculo: "SPG5J59" })).toContain("Corridas: *16*")
     expect(consultar("gestor", "relatorio_veiculo", { veiculo: "Strada 12" })).toContain("Não há fechamento")
     expect(consultar("motorista", "relatorio_veiculo", {})).toContain("não está disponível")
+  })
+
+  it("gestor: frota fictícia com placas do seed, resumo e comparação", () => {
+    const frota = consultar("gestor", "relatorio_veiculo", {})
+    expect(frota).toContain("Fechamento da frota — mês de setembro* (8 veículos)")
+    for (const placa of ["SPG5J59", "RIO1A23", "RIO2B34", "SPA3C45", "SPB4D56", "SPC5E67", "SPE7G89", "SPF8H90"]) expect(frota).toContain(placa)
+    expect(frota).toContain("Total:")
+    // Moto Factor em manutenção: sem fechamento na semana
+    expect(consultar("gestor", "relatorio_veiculo", { periodo: "semana" })).toContain("(7 veículos)")
+    // "fiorino" sem número: as duas Fiorinos, só o mês
+    const fiorinos = consultar("gestor", "relatorio_veiculo", { veiculo: "fiorino" })
+    expect(fiorinos).toContain("Fiorino 59")
+    expect(fiorinos).toContain("Fiorino 45")
+    expect(fiorinos).not.toContain("semana de 07/09")
+    expect(responderSemIA("gestor", "quanto a kangoo faturou na semana?")).toContain("Kangoo 56* (SPB4D56) — semana")
+    expect(responderSemIA("gestor", "fechamento da frota")).toContain("Fechamento da frota")
+    // "motoristas" não é "moto", e placa sozinha continua na busca de veículo
+    expect(responderSemIA("gestor", "quais motoristas estão rodando?")).not.toContain("Fechamento")
+    expect(responderSemIA("gestor", "placa SPA3C45")).not.toContain("Fechamento")
   })
 
   it("motorista e cliente respeitam o escopo da persona", () => {

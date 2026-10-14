@@ -1,5 +1,6 @@
 import type { ToolArgs } from "../core/types"
 import type { PersonaId } from "./personas"
+import { vehicleMentioned } from "../connectors/alphalog/vehicleReports"
 
 /**
  * Modo sem IA: responde a demo só com regras + as mesmas ferramentas do agente, direto dos
@@ -49,9 +50,13 @@ function gestor(t: string, raw: string, consultar: Consultar): string {
     const cliente = ["mendes", "construplus", "boa vista", "serra dourada", "monte verde", "rio bonito"].find((c) => t.includes(c))
     return consultar("gestor", "tabela_frete", { cliente, tipo_veiculo: tipo, regiao })
   }
-  if (has(t, "fiorino", "mge9159", "mge 9159", "fechamento", "relatorio", "km rodado", "km percorrido", "diaria", "media de consumo", "km por litro", "km/l")) {
+  // fechamento por veículo: "como fechou a fiorino 59?", "km rodado das kangoos", "fechamento da frota"
+  const citado = vehicleMentioned(raw)
+  const sobreFechamento = has(t, "fechamento", "fechou", "relatorio", "km rodado", "km percorrido", "rodou", "diaria", "consumo", "km por litro", "km/l", "cada veiculo", "por veiculo")
+  const sobreResultado = has(t, "fatur", "corrida", "combustivel", "gast", "custo", "manutencao", "media", "semana", "setembro", "resultado")
+  if (sobreFechamento || (citado && (!citado.byPlate || sobreResultado))) {
     const periodo = has(t, "semana", "07/09", "11/09") ? "semana" : has(t, "mes", "setembro") ? "mes" : undefined
-    return consultar("gestor", "relatorio_veiculo", { periodo })
+    return consultar("gestor", "relatorio_veiculo", { veiculo: citado?.veiculo, periodo })
   }
   if (has(t, "como esta a operacao", "como ta a operacao", "operacao agora", "panorama", "resumo", "visao geral")) {
     return consultar("gestor", "painel_gestao", { topico: "resumo" })
