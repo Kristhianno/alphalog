@@ -12,6 +12,7 @@ import type { Connector, RepdriveActor, ToolDef } from "../../core/types"
 import { answerToWhatsApp, bulletList } from "../../core/whatsappFormat"
 import { findVisibleRequest, loadAlphaLog, visibleRequests, type AlphaLogCtx } from "./data"
 import { estimateRequest, formatWhen, isSameDayBR, type Moment } from "./estimate"
+import { VEHICLE_REPORTS, findVehicleReports, formatVehicleReport } from "./vehicleReports"
 
 type Tool = ToolDef<AlphaLogCtx>
 
@@ -97,6 +98,23 @@ const tabelaFrete: Tool = {
       (p) => `${clientName(ctx, p.client_id)} · ${VEHICLE_TYPE_LABELS[p.transport_type]} · ${p.region}: *${formatCurrency(p.price)}*`,
     )
     return `${rows.length} preço(s) encontrado(s)${rows.length > 15 ? " (mostrando 15)" : ""}:\n${bulletList(shown)}`
+  },
+}
+
+const relatorioVeiculo: Tool = {
+  name: "relatorio_veiculo",
+  description: `Fechamento por veículo (semanal e mensal): corridas, faturamento, km percorrido, combustível, média de consumo (km/l), manutenção e diária do motorista. Veículos com fechamento: ${[...new Set(VEHICLE_REPORTS.map((r) => `${r.vehicle} (${r.plate})`))].join(", ")}. Filtros opcionais.`,
+  roles: STAFF_ROLES,
+  params: [
+    { name: "veiculo", type: "string", description: "nome ou placa do veículo, ex.: Fiorino 59 ou MGE9159" },
+    { name: "periodo", type: "string", description: "semana | mes" },
+  ],
+  run: (_ctx, _actor, args) => {
+    const reports = findVehicleReports(args.veiculo as string | undefined, args.periodo as string | undefined)
+    if (reports.length === 0) {
+      return `Não há fechamento lançado para esse filtro. Veículos com fechamento: ${[...new Set(VEHICLE_REPORTS.map((r) => r.vehicle))].join(", ")}.`
+    }
+    return reports.map(formatVehicleReport).join("\n\n")
   },
 }
 
@@ -311,5 +329,5 @@ const acompanharCarga: Tool = {
 export const alphaLogConnector: Connector<AlphaLogCtx> = {
   id: "alphalog",
   load: () => loadAlphaLog(),
-  tools: [painelGestao, consultaGestao, tabelaFrete, minhasCorridas, detalheCarga, minhaDocumentacao, minhasSolicitacoes, acompanharCarga],
+  tools: [painelGestao, consultaGestao, tabelaFrete, relatorioVeiculo, minhasCorridas, detalheCarga, minhaDocumentacao, minhasSolicitacoes, acompanharCarga],
 }

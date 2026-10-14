@@ -25,7 +25,7 @@ const THANKS = /^(obrigad[oa]|valeu|vlw|show|top|perfeito|otimo|blz|beleza|ok)\b
 
 const HELP: Record<PersonaId, string> = {
   gestor:
-    "Posso te ajudar com a operação da AlphaLog. Experimente:\n• _Como está a operação agora?_\n• _Quanto faturamos nos últimos 30 dias?_\n• _Algum veículo precisa de troca de óleo?_\n• _Quais motoristas estão rodando?_\n• _Quanto cobramos da Mendes num utilitário?_\n• _Status da 1012_",
+    "Posso te ajudar com a operação da AlphaLog. Experimente:\n• _Como está a operação agora?_\n• _Quanto faturamos nos últimos 30 dias?_\n• _Algum veículo precisa de troca de óleo?_\n• _Como fechou a Fiorino 59 em setembro?_\n• _Quais motoristas estão rodando?_\n• _Quanto cobramos da Mendes num utilitário?_\n• _Status da 1012_",
   motorista:
     "Posso te ajudar com suas corridas. Experimente:\n• _Quais são minhas entregas de hoje?_\n• _O que eu levo na carga 1007?_\n• _Minha CNH e meu veículo estão em dia?_\n• _Quantas entregas fiz no mês?_",
   cliente:
@@ -48,6 +48,10 @@ function gestor(t: string, raw: string, consultar: Consultar): string {
     const regiao = ["central", "norte", "sul"].find((r) => t.includes(`regiao ${r}`) || t.endsWith(r))
     const cliente = ["mendes", "construplus", "boa vista", "serra dourada", "monte verde", "rio bonito"].find((c) => t.includes(c))
     return consultar("gestor", "tabela_frete", { cliente, tipo_veiculo: tipo, regiao })
+  }
+  if (has(t, "fiorino", "mge9159", "mge 9159", "fechamento", "relatorio", "km rodado", "km percorrido", "diaria", "media de consumo", "km por litro", "km/l")) {
+    const periodo = has(t, "semana", "07/09", "11/09") ? "semana" : has(t, "mes", "setembro") ? "mes" : undefined
+    return consultar("gestor", "relatorio_veiculo", { periodo })
   }
   if (has(t, "como esta a operacao", "como ta a operacao", "operacao agora", "panorama", "resumo", "visao geral")) {
     return consultar("gestor", "painel_gestao", { topico: "resumo" })

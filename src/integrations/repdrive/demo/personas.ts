@@ -29,9 +29,9 @@ export const PERSONAS: Record<PersonaId, Persona> = {
     aliases: ["gestor", "gestora", "gerente", "gestao"],
     actor: { companyId: DEMO_COMPANY_ID, userId: SEED_USER_IDS.gestor, role: "gestor" },
     who: "Carlos Eduardo Lima, gestor de operações da AlphaLog Transportes",
-    tools: ["painel_gestao", "consulta_gestao", "tabela_frete"],
+    tools: ["painel_gestao", "consulta_gestao", "tabela_frete", "relatorio_veiculo"],
     focus:
-      "operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH) e tabela de fretes",
+      "operação em tempo real, solicitações paradas ou canceladas, faturamento, custos de frota (combustível, óleo, manutenção), motoristas (online, ranking, CNH), tabela de fretes e fechamento semanal/mensal por veículo (ex.: Fiorino 59)",
     intro: [
       "👔 *Modo Gestor ativado*",
       "Agora você é o *Carlos*, gestor de operações da AlphaLog Transportes. Pergunte como perguntaria no dia a dia, por exemplo:",
@@ -39,6 +39,7 @@ export const PERSONAS: Record<PersonaId, Persona> = {
       "• _Como está a operação agora?_",
       "• _Quanto faturamos nos últimos 30 dias?_",
       "• _Algum veículo precisa de troca de óleo?_",
+      "• _Como fechou a Fiorino 59 em setembro?_",
       "• _Quanto cobramos da Mendes num utilitário?_",
     ].join("\n"),
   },

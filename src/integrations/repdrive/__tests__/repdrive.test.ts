@@ -68,6 +68,22 @@ describe("Repdrive — modo sem IA (regras + dados do AlphaLog)", () => {
     expect(responderSemIA("gestor", "status da 1012")).toContain("#1012")
   })
 
+  it("gestor: fechamento da Fiorino 59 por semana e por mês", () => {
+    const mes = responderSemIA("gestor", "como fechou a fiorino 59 em setembro?")
+    expect(mes).toContain("mês de setembro")
+    expect(mes).toContain("Corridas: *77*")
+    expect(mes).toContain("2.126 km")
+    expect(mes).toContain("631,00")
+    expect(mes).not.toContain("semana de 07/09")
+    const semana = responderSemIA("gestor", "e o km rodado da semana?")
+    expect(semana).toContain("semana de 07/09 a 11/09")
+    expect(semana).toContain("918,00")
+    expect(semana).toContain("10,38 km/l")
+    expect(consultar("gestor", "relatorio_veiculo", { veiculo: "MGE9159" })).toContain("Corridas: *16*")
+    expect(consultar("gestor", "relatorio_veiculo", { veiculo: "Strada 12" })).toContain("Não há fechamento")
+    expect(consultar("motorista", "relatorio_veiculo", {})).toContain("não está disponível")
+  })
+
   it("motorista e cliente respeitam o escopo da persona", () => {
     expect(responderSemIA("motorista", "minha cnh está em dia?")).toContain("CNH")
     expect(responderSemIA("motorista", "o que levo na 1008?")).toContain("Não encontrei")
