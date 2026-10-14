@@ -12,7 +12,7 @@ import type { Connector, RepdriveActor, ToolDef } from "../../core/types"
 import { answerToWhatsApp, bulletList } from "../../core/whatsappFormat"
 import { findVisibleRequest, loadAlphaLog, visibleRequests, type AlphaLogCtx } from "./data"
 import { estimateRequest, formatWhen, isSameDayBR, type Moment } from "./estimate"
-import { VEHICLE_REPORTS, findVehicleReports, formatFleetSummary, formatVehicleReport } from "./vehicleReports"
+import { VEHICLE_REPORTS, fleetFor, findVehicleReports, formatFleetSummary, formatVehicleReport } from "./vehicleReports"
 
 type Tool = ToolDef<AlphaLogCtx>
 
@@ -109,11 +109,12 @@ const relatorioVeiculo: Tool = {
     { name: "veiculo", type: "string", description: "nome, placa ou modelo do veículo, ex.: Fiorino 59, SPG5J59 ou Kangoo" },
     { name: "periodo", type: "string", description: "semana | mes" },
   ],
-  run: (_ctx, _actor, args) => {
+  run: (_ctx, actor, args) => {
     const veiculo = args.veiculo as string | undefined
     const periodo = args.periodo as string | undefined
-    if (!veiculo) return formatFleetSummary(findVehicleReports(undefined, periodo), periodo)
-    let reports = findVehicleReports(veiculo, periodo)
+    const fleet = fleetFor(actor.leadKey)
+    if (!veiculo) return formatFleetSummary(findVehicleReports(undefined, periodo, fleet), periodo)
+    let reports = findVehicleReports(veiculo, periodo, fleet)
     if (reports.length === 0) {
       return `Não há fechamento lançado para esse filtro. Veículos com fechamento: ${[...new Set(VEHICLE_REPORTS.map((r) => r.vehicle))].join(", ")}.`
     }

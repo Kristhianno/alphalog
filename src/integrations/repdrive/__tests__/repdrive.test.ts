@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { consultar, responderSemIA } from "../entries/consulta"
 import { audioOf, handleWebhook, withTranscription, type EntradaState } from "../entries/entrada"
 import { finalizeReply, routeDemoMessage, SESSION_TIMEOUT_MS } from "../demo/router"
+import { VEHICLE_REPORTS, fleetFor } from "../connectors/alphalog/vehicleReports"
 
 const GROUP = "120363000000000000@g.us"
 let msgId = 0
@@ -101,6 +102,25 @@ describe("Repdrive — modo sem IA (regras + dados do AlphaLog)", () => {
     // "motoristas" não é "moto", e placa sozinha continua na busca de veículo
     expect(responderSemIA("gestor", "quais motoristas estão rodando?")).not.toContain("Fechamento")
     expect(responderSemIA("gestor", "placa SPA3C45")).not.toContain("Fechamento")
+  })
+
+  it("gestor: cada lead recebe números próprios, estáveis e coerentes", () => {
+    const fiorino = (lead: string) => consultar("gestor", "relatorio_veiculo", { veiculo: "Fiorino 59", periodo: "mes" }, undefined, lead)
+    const a = fiorino("pessoa:5541900000001@s.whatsapp.net")
+    const b = fiorino("pessoa:5541900000002@s.whatsapp.net")
+    expect(a).toContain("SPG5J59")
+    expect(a).not.toEqual(b)
+    expect(a).not.toContain("5.709,50")
+    expect(fiorino("pessoa:5541900000001@s.whatsapp.net")).toEqual(a)
+    // modo sem IA usa os mesmos números do lead
+    expect(responderSemIA("gestor", "como fechou a fiorino 59 em setembro?", undefined, "pessoa:5541900000001@s.whatsapp.net")).toEqual(a)
+
+    const fleet = fleetFor("pessoa:5541900000003@s.whatsapp.net")
+    for (const r of fleet) {
+      const base = VEHICLE_REPORTS.find((x) => x.plate === r.plate && x.kind === r.kind)!
+      expect(r.fuel).toBeCloseTo((r.km / r.avgKmL) * (base.fuel / (base.km / base.avgKmL)), 1)
+      if (r.kind === "semana") expect(r.runs).toBeLessThan(fleet.find((x) => x.plate === r.plate && x.kind === "mes")!.runs)
+    }
   })
 
   it("motorista e cliente respeitam o escopo da persona", () => {

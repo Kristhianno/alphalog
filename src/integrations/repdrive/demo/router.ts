@@ -22,6 +22,8 @@ export type DemoRoute =
       kind: "agent"
       persona: PersonaId
       clientId?: string
+      /** chave do lead: os números fictícios do Gestor variam por lead */
+      leadKey: string
       memoryKey: string
       systemPrompt: string
       session: DemoSession
@@ -79,6 +81,7 @@ export function routeDemoMessage(params: {
     kind: "agent",
     persona: prev.persona,
     clientId: prev.persona === "cliente" ? prev.clientId : undefined,
+    leadKey: params.sessionKey,
     memoryKey: `${params.sessionKey}#${prev.epoch}`,
     systemPrompt: systemPrompt(personaFor(prev.persona, prev.clientId), new Date(params.now)),
     session,

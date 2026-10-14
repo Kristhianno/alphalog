@@ -119,7 +119,7 @@ const args = {};
 for (const k of ${JSON.stringify([...new Set(toolDefs.flatMap((t) => t.params.map((p) => p.name)))])}) {
   if (i[k] !== undefined && i[k] !== null && i[k] !== "") args[k] = i[k];
 }
-return [{ json: { resposta: Repdrive.consultar(i.persona, i.ferramenta, args, i.clientId) } }];`
+return [{ json: { resposta: Repdrive.consultar(i.persona, i.ferramenta, args, i.clientId, i.leadKey) } }];`
 
 const allParams = [...new Map(toolDefs.flatMap((t) => t.params).map((p) => [p.name, p])).values()]
 
@@ -265,7 +265,7 @@ const semIaCode = `${consultaJs}
 const ai = $input.first().json.output;
 if (typeof ai === "string" && ai.trim()) return [{ json: { output: ai } }];
 const r = $("Roteador").first().json;
-return [{ json: { output: Repdrive.responderSemIA(r.persona, r.chatInput, r.clientId) } }];`
+return [{ json: { output: Repdrive.responderSemIA(r.persona, r.chatInput, r.clientId, r.leadKey) } }];`
 
 const semIa = node("Responder com dados AlphaLog", "n8n-nodes-base.code", 2, [2460, 160], { jsCode: semIaCode })
 
@@ -306,12 +306,13 @@ const tools = toolDefs.map((t, idx) => {
   const value = {
     persona: '={{ $("Roteador").first().json.persona }}',
     clientId: '={{ $("Roteador").first().json.clientId }}',
+    leadKey: '={{ $("Roteador").first().json.leadKey }}',
     ferramenta: t.name,
   }
   for (const p of t.params) {
     value[p.name] = `={{ $fromAI(${JSON.stringify(p.name)}, ${JSON.stringify(p.description)}, "${p.type}") }}`
   }
-  const schemaFields = ["persona", "clientId", "ferramenta", ...allParams.map((p) => p.name)]
+  const schemaFields = ["persona", "clientId", "leadKey", "ferramenta", ...allParams.map((p) => p.name)]
   return node(
     t.name,
     "@n8n/n8n-nodes-langchain.toolWorkflow",
@@ -356,7 +357,7 @@ const enviar = node("Enviar WhatsApp", "n8n-nodes-base.httpRequest", 4.4, [2880,
 
 const trigger = node("Ferramentas (chamadas pela IA)", "n8n-nodes-base.executeWorkflowTrigger", 1.1, [0, 900], {
   workflowInputs: {
-    values: ["persona", "clientId", "ferramenta", ...allParams.map((p) => p.name)].map((name) => ({ name })),
+    values: ["persona", "clientId", "leadKey", "ferramenta", ...allParams.map((p) => p.name)].map((name) => ({ name })),
   },
 })
 

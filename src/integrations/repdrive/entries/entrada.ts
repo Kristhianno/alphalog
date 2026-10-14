@@ -46,6 +46,7 @@ export type EntradaOutput =
       memoryKey: string
       persona: string
       clientId: string
+      leadKey: string
       send: SendPayload
     }
 
@@ -284,6 +285,7 @@ function routeInChat(
       memoryKey: route.memoryKey,
       persona: route.persona,
       clientId: route.clientId ?? "",
+      leadKey: route.leadKey,
       send: out.send,
     },
   ]

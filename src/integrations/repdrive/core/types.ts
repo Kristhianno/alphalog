@@ -7,6 +7,8 @@ import type { Role } from "@/types/enums"
  */
 export interface RepdriveActor extends Actor {
   companyId: string
+  /** lead da demo (chave da sessão) — semente dos números fictícios que variam por lead */
+  leadKey?: string
 }
 
 export type ToolArgs = Record<string, string | number | undefined>
