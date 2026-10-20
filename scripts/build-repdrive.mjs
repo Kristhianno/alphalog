@@ -67,6 +67,9 @@ ${entradaJs}
 // o nó do Redis devolve só { session }; mensagem e chave vêm do nó "Chave da sessão"
 const src = $("Injetar transcrição").isExecuted ? $("Injetar transcrição").first().json : $("Chave da sessão").first().json;
 const inp = { ...src, session: $("Ler sessão (Redis)").first().json.session };
+// Privado compartilhado com as outras demos (Festas, Comercial, DAVIQUE): quem convidou por último é o dono.
+const dono = $("Ler dono do privado").first().json.dono;
+if (inp.privado && dono && dono !== "repdrive") return [];
 const state = $getWorkflowStaticData("global");
 const work = { seen: state.seen, demoGroups: state.demoGroups, clientSeq: state.clientSeq, sessions: {} };
 if (inp.session) {
@@ -84,7 +87,9 @@ state.demoGroups = work.demoGroups;
 state.clientSeq = work.clientSeq;
 const session = work.sessions[inp.sessionKey];
 const sessionJson = session ? JSON.stringify(session) : "";
-return outs.map((out) => ({ json: { ...out, sessionKey: inp.sessionKey, sessionJson } }));`
+// mensagem no grupo que deixou a conversa no privado → o RepDrive passa a ser o dono do privado
+const assumirPrivado = !inp.privado && !!session?.privado && !session?.ended;
+return outs.map((out, i) => ({ json: { ...out, sessionKey: inp.sessionKey, sessionJson, assumirPrivado: assumirPrivado && i === 0 } }));`
 
 const chaveCode = `${entradaJs}
 
@@ -136,7 +141,7 @@ const ehAudio = node("É áudio?", "n8n-nodes-base.if", 2.3, [600, 300], {
   conditions: {
     options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 3 },
     conditions: [
-      { id: "cond-audio", leftValue: '={{ !!$("Chave da sessão").first().json.audio && (!$("Chave da sessão").first().json.privado || !!$json.session) }}', rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
+      { id: "cond-audio", leftValue: '={{ !!$("Chave da sessão").first().json.audio && (!$("Chave da sessão").first().json.privado || !!$("Ler sessão (Redis)").first().json.session) }}', rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } },
     ],
     combinator: "and",
   },
@@ -209,6 +214,34 @@ const lerSessao = node(
   1,
   [400, 300],
   { operation: "get", propertyName: "session", key: "=repdrive:sessao:{{ $json.sessionKey }}", keyType: "automatic", options: {} },
+  { credentials: { redis: REDIS_CREDENTIAL } },
+)
+
+const lerDono = node(
+  "Ler dono do privado",
+  "n8n-nodes-base.redis",
+  1,
+  [500, 460],
+  { operation: "get", propertyName: "dono", key: '=demo:privado:{{ $("Chave da sessão").first().json.sessionKey }}', keyType: "automatic", options: {} },
+  { credentials: { redis: REDIS_CREDENTIAL }, alwaysOutputData: true },
+)
+
+const ifDono = node("Assumiu o privado?", "n8n-nodes-base.if", 2.3, [2020, -100], {
+  conditions: {
+    options: { caseSensitive: true, leftValue: "", typeValidation: "loose", version: 3 },
+    conditions: [{ id: "cond-dono", leftValue: "={{ $json.assumirPrivado === true }}", rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } }],
+    combinator: "and",
+  },
+  looseTypeValidation: true,
+  options: {},
+})
+
+const marcarDono = node(
+  "Marcar dono do privado",
+  "n8n-nodes-base.redis",
+  1,
+  [2240, -100],
+  { operation: "set", key: "=demo:privado:{{ $json.sessionKey }}", value: "repdrive", keyType: "string", expire: true, ttl: 31 * 86400 },
   { credentials: { redis: REDIS_CREDENTIAL } },
 )
 
@@ -378,12 +411,14 @@ const sticky = node("Leia-me", "n8n-nodes-base.stickyNote", 1, [-40, -120], {
   ].join("\n"),
 })
 
-const nodes = [sticky, webhook, chave, ehAudio, temAudio, baixarAudio, prepararAudio, transcrever, injetar, lerSessao, roteador, gravarSessao, ifAgent, semIa, agent, model, memory, ...tools, montar, enviar, trigger, consulta]
+const nodes = [sticky, webhook, chave, lerDono, ifDono, marcarDono, ehAudio, temAudio, baixarAudio, prepararAudio, transcrever, injetar, lerSessao, roteador, gravarSessao, ifAgent, semIa, agent, model, memory, ...tools, montar, enviar, trigger, consulta]
 
 const connections = {
   [webhook.name]: { main: [[{ node: chave.name, type: "main", index: 0 }]] },
   [chave.name]: { main: [[{ node: lerSessao.name, type: "main", index: 0 }]] },
-  [lerSessao.name]: { main: [[{ node: ehAudio.name, type: "main", index: 0 }]] },
+  [lerSessao.name]: { main: [[{ node: lerDono.name, type: "main", index: 0 }]] },
+  [lerDono.name]: { main: [[{ node: ehAudio.name, type: "main", index: 0 }]] },
+  [ifDono.name]: { main: [[{ node: marcarDono.name, type: "main", index: 0 }], []] },
   [ehAudio.name]: {
     main: [
       [{ node: temAudio.name, type: "main", index: 0 }],
@@ -405,6 +440,7 @@ const connections = {
       [
         // gravar primeiro (fica acima no canvas): a sessão persiste mesmo se o envio falhar
         { node: gravarSessao.name, type: "main", index: 0 },
+        { node: ifDono.name, type: "main", index: 0 },
         { node: ifAgent.name, type: "main", index: 0 },
       ],
     ],
